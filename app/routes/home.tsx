@@ -1,9 +1,12 @@
+import { useTranslation } from 'react-i18next';
+
 export function meta() {
-  return [{ title: 'Trang chủ | Workspace' }];
+  return [{ title: 'Workspace' }];
 }
 
-export const handle = { breadcrumb: 'Trang chủ' };
+export const handle = { breadcrumbKey: 'home.label' };
 
 export default function Home() {
-  return <section aria-label="Trang chủ" className="min-h-full flex-1" />;
+  const { t } = useTranslation();
+  return <section aria-label={t('home.label')} className="min-h-full flex-1" />;
 }

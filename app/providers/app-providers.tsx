@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { SnackbarProvider, closeSnackbar } from 'notistack';
 import { X } from 'lucide-react';
 import { SessionBootstrap } from '~/features/auth/session-bootstrap';
+import '~/i18n/i18n';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (

@@ -1,12 +1,14 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from './auth-store';
 import { AUTH_MESSAGES } from './auth-messages';
 
 export function useLogout() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation();
   const [isPending, setPending] = useState(false);
   const locked = useRef(false);
   const logout = async () => {
@@ -22,7 +24,7 @@ export function useLogout() {
       });
       if (!response.ok) throw new Error('Could not revoke server session');
     } catch {
-      enqueueSnackbar(AUTH_MESSAGES.logoutError, {
+      enqueueSnackbar(t('account.logoutError'), {
         variant: 'error',
         autoHideDuration: 6000,
       });
@@ -33,8 +35,8 @@ export function useLogout() {
     const { persisted } = useAuthStore.getState().signOut();
     enqueueSnackbar(
       persisted
-        ? 'Đã đăng xuất.'
-        : 'Đã đăng xuất, nhưng không thể xóa phiên đã lưu. Phiên cũ có thể được khôi phục khi tải lại trang.',
+        ? t('account.loggedOut')
+        : t('account.loggedOutStorageWarning'),
       {
         variant: persisted ? 'success' : 'warning',
         autoHideDuration: persisted ? 4000 : 6000,
@@ -44,7 +46,7 @@ export function useLogout() {
       await navigate('/login', { replace: true });
     } catch {
       enqueueSnackbar(
-        'Bạn đã đăng xuất nhưng chưa thể mở trang đăng nhập. Vui lòng thử lại.',
+        t('account.loginNavigationError'),
         {
           variant: 'error',
           autoHideDuration: 6000,

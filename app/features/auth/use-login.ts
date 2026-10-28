@@ -4,14 +4,15 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { loginSchema, type LoginValues } from './login-schema';
 import { authenticate } from './auth-service';
 import { useAuthStore } from './auth-store';
-import { AUTH_MESSAGES } from './auth-messages';
 
 export type LoginPhase = 'idle' | 'submitting' | 'redirecting';
 
 export function useLogin() {
+  const { t } = useTranslation();
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { username: '', password: '' },
@@ -20,18 +21,21 @@ export function useLogin() {
   const { enqueueSnackbar } = useSnackbar();
   const [phase, setPhase] = useState<LoginPhase>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [errorKey, setErrorKey] = useState('');
   const [navigationError, setNavigationError] = useState(false);
   const locked = useRef(false);
   const focusPassword = useRef(false);
 
   useEffect(() => {
     const subscription = form.watch(() => {
-      setErrorMessage((message) =>
-        message === AUTH_MESSAGES.invalidCredentials ? '' : message,
-      );
+      setErrorKey((key) => key === 'login.invalidCredentials' ? '' : key);
     });
     return () => subscription.unsubscribe();
   }, [form]);
+
+  useEffect(() => {
+    setErrorMessage(errorKey ? t(errorKey) : '');
+  }, [errorKey, t]);
 
   useEffect(() => {
     if (phase === 'idle' && focusPassword.current) {
@@ -40,7 +44,9 @@ export function useLogin() {
     }
   }, [phase, form, errorMessage]);
 
-  const showError = (message: string) => {
+  const showError = (key: string) => {
+    const message = t(key);
+    setErrorKey(key);
     setErrorMessage(message);
     enqueueSnackbar(message, { variant: 'error', autoHideDuration: 6000 });
   };
@@ -53,7 +59,7 @@ export function useLogin() {
       await navigate('/home', { replace: true });
     } catch {
       setNavigationError(true);
-      showError(AUTH_MESSAGES.navigationError);
+      showError('login.navigationError');
     }
   };
 
@@ -65,13 +71,13 @@ export function useLogin() {
       try {
         user = await authenticate(values);
       } catch (error) {
-        showError(AUTH_MESSAGES.loginError);
+        showError('login.loginError');
         return;
       }
       if (!user) {
         form.setValue('password', '');
         focusPassword.current = true;
-        showError(AUTH_MESSAGES.invalidCredentials);
+        showError('login.invalidCredentials');
         return;
       }
       try {
@@ -83,7 +89,7 @@ export function useLogin() {
         });
         if (!response.ok) throw new Error('Could not clear server session');
       } catch {
-        showError(AUTH_MESSAGES.loginError);
+        showError('login.loginError');
         return;
       }
       // Mark navigation ownership before publishing the user to route guards.
@@ -91,8 +97,8 @@ export function useLogin() {
       const { persisted } = useAuthStore.getState().signIn(user);
       enqueueSnackbar(
         persisted
-          ? `Đăng nhập thành công. Chào mừng ${user.username}!`
-          : AUTH_MESSAGES.persistenceWarning,
+          ? t('login.success', { username: user.username })
+          : t('login.persistenceWarning'),
         {
           variant: persisted ? 'success' : 'warning',
           autoHideDuration: persisted ? 4000 : 6000,
@@ -100,7 +106,16 @@ export function useLogin() {
       );
       await openHome();
     },
-    () => showError(AUTH_MESSAGES.invalidForm),
+    () => {
+      const values = form.getValues();
+      if (!values.username.trim()) {
+        form.setError('username', { type: 'required', message: t('login.usernameRequired') });
+      }
+      if (!values.password) {
+        form.setError('password', { type: 'required', message: t('login.passwordRequired') });
+      }
+      showError('login.invalidForm');
+    },
   );
 
   const onSubmit = async (event?: FormEvent<HTMLFormElement>) => {

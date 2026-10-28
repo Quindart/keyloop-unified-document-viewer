@@ -1,12 +1,12 @@
 // Adapted from official shadcn login-04: https://ui.shadcn.com/blocks/login
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Languages } from 'lucide-react';
 import { Link, Navigate, useSearchParams } from 'react-router';
 import {
   Eye,
   EyeOff,
   LoaderCircle,
-  ArrowRight,
-  ShieldCheck,
 } from 'lucide-react';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
@@ -15,9 +15,11 @@ import { useLogin } from './use-login';
 import { useAuthStore } from './auth-store';
 import { SessionPending } from './auth-gate';
 import { LoginProgress } from './login-progress';
-import { AUTH_MESSAGES } from './auth-messages';
+import i18n, { LANGUAGE_STORAGE_KEY } from '~/i18n/i18n';
+import type { AppLanguage } from '~/i18n/resources';
 
-export function LoginForm() {
+export function LoginForm({ title }: { title: string }) {
+  const { t, i18n: translation } = useTranslation();
   const { form, onSubmit, phase, errorMessage, navigationError, retryHome } =
     useLogin();
   const user = useAuthStore((state) => state.user);
@@ -27,6 +29,9 @@ export function LoginForm() {
   const busy = phase !== 'idle';
   const googleError = searchParams.get('auth_error') === 'google';
   const { errors } = form.formState;
+  useEffect(() => {
+    document.title = title;
+  }, [title]);
   if (!hydrated) return <SessionPending />;
   if (user && !busy && !navigationError) return <Navigate to="/home" replace />;
   return (
@@ -43,15 +48,16 @@ export function LoginForm() {
           className="relative z-10 h-auto w-36 brightness-0 invert"
         />
         <div className="relative z-10 max-w-xl text-white">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/75">
-            Keyloop workspace
+          <div className="relative z-10 flex items-center justify-between gap-4">
+          <p className="login-copy login-copy-delay-1 text-xs font-semibold uppercase tracking-[0.22em] text-white/75">
+              Keyloop workspace
           </p>
-          <h2 className="mt-4 text-3xl font-semibold leading-tight tracking-tight lg:text-4xl">
-            Không gian làm việc của bạn, sẵn sàng mỗi ngày.
+          </div>
+          <h2 className="login-copy login-copy-delay-2 mt-4 text-3xl font-semibold leading-tight tracking-tight lg:text-4xl">
+            {t('login.brandHeading')}
           </h2>
-          <p className="mt-4 max-w-md text-sm leading-6 text-white/75">
-            Đăng nhập để tiếp tục công việc trong một không gian tập trung và
-            thuận tiện.
+          <p className="login-copy login-copy-delay-3 mt-4 max-w-md text-sm leading-6 text-white/75">
+            {t('login.brandDescription')}
           </p>
         </div>
       </section>
@@ -66,34 +72,30 @@ export function LoginForm() {
       <section className="login-panel relative z-20 flex min-h-svh items-center justify-center px-6 py-12 sm:px-12">
         <div className="w-full max-w-md">
           <div className="mb-10 md:hidden">
-            <img
-              src="/keyloop-logo.svg"
-              alt="Keyloop"
-              className="h-auto w-32"
-            />
+            <img src="/keyloop-logo.svg" alt="Keyloop" className="h-auto w-32" />
           </div>
           <form
             noValidate
             onSubmit={onSubmit}
             aria-busy={busy}
-            className="login-form flex flex-col gap-7"
+            className="login-form flex flex-col gap-7 text-base"
           >
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight">
-                Chào mừng trở lại
+              <h1 className="login-copy login-copy-delay-1 text-4xl font-semibold tracking-tight">
+                {t('login.welcome')}
               </h1>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                Nhập thông tin tài khoản để đăng nhập.
+              <p className="login-copy login-copy-delay-2 mt-3 text-base leading-7 text-muted-foreground">
+                {t('login.description')}
               </p>
             </div>
             <LoginProgress phase={phase} />
             <div className="grid gap-3">
-              <Label htmlFor="username">Tên đăng nhập</Label>
+              <Label htmlFor="username">{t('login.username')}</Label>
               <Input
                 id="username"
                 autoComplete="username"
-                placeholder="Nhập tên đăng nhập"
-                className="h-12"
+                placeholder={t('login.usernamePlaceholder')}
+                className="h-14 rounded-xl text-base"
                 disabled={busy}
                 aria-invalid={!!errors.username}
                 aria-describedby={
@@ -108,14 +110,14 @@ export function LoginForm() {
               )}
             </div>
             <div className="grid gap-3">
-              <Label htmlFor="password">Mật khẩu</Label>
+              <Label htmlFor="password">{t('login.password')}</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
-                  placeholder="Nhập mật khẩu"
-                  className="h-12 pr-12"
+                  placeholder={t('login.passwordPlaceholder')}
+                  className="h-14 rounded-xl pr-12 text-base"
                   disabled={busy}
                   aria-invalid={!!errors.password}
                   aria-describedby={
@@ -127,8 +129,8 @@ export function LoginForm() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-1 top-1 h-10 w-10"
-                  aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                  className="absolute right-1 top-2 h-10 w-10"
+                  aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
                   aria-pressed={showPassword}
                   disabled={busy}
                   onClick={() => setShowPassword((value) => !value)}
@@ -149,72 +151,22 @@ export function LoginForm() {
             {(errorMessage || googleError) && (
               <p
                 role="alert"
-                className="rounded-lg bg-red-50 p-3 text-sm leading-6 text-red-700"
+                className="rounded-lg bg-red-50 p-3 text-base leading-7 text-red-700"
               >
-                {errorMessage || AUTH_MESSAGES.googleLoginError}
+                {errorMessage || t('login.googleLoginError')}
               </p>
             )}
-            <div className="relative flex items-center gap-3 text-xs text-muted-foreground before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border">
-              <span>hoặc</span>
-            </div>
-            <Button
-              asChild
-              variant="outline"
-              className="h-12 w-full aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-              aria-disabled={busy}
-            >
-              <Link
-                to="/auth/google"
-                aria-label="Tiếp tục với Google"
-                tabIndex={busy ? -1 : undefined}
-                onClick={(event) => {
-                  if (busy) event.preventDefault();
-                }}
-              >
-                {busy ? (
-                  <LoaderCircle
-                    aria-hidden="true"
-                    className="motion-safe:animate-spin"
-                  />
-                ) : (
-                  <svg
-                    aria-hidden="true"
-                    className="size-5"
-                    viewBox="0 0 48 48"
-                    focusable="false"
-                  >
-                    <path
-                      fill="#4285F4"
-                      d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.9 6.1-15Z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M24 44c5.5 0 10.1-1.8 13.5-4.9l-6.6-5.1c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M12.6 27.6a12 12 0 0 1 0-7.2v-5.3H5.8a20 20 0 0 0 0 17.8l6.8-5.3Z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M24 12c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 6 29.5 4 24 4A20 20 0 0 0 5.8 15.1l6.8 5.3C14.2 15.6 18.7 12 24 12Z"
-                    />
-                  </svg>
-                )}
-                {busy ? 'Đang chuẩn bị Google…' : 'Tiếp tục với Google'}
-              </Link>
-            </Button>
             {navigationError ? (
               <Button
                 type="button"
-                className="h-12"
+                className="h-14 rounded-xl text-base"
                 disabled={busy}
                 onClick={retryHome}
               >
-                Thử mở trang chủ lại
+                {t('login.retryHome')}
               </Button>
             ) : (
-              <Button type="submit" disabled={busy} className="h-12 w-full">
+              <Button type="submit" disabled={busy} className="h-14 w-full rounded-xl text-base">
                 {busy ? (
                   <LoaderCircle
                     aria-hidden="true"
@@ -222,19 +174,70 @@ export function LoginForm() {
                   />
                 ) : null}
                 {phase === 'redirecting'
-                  ? AUTH_MESSAGES.redirecting
+                  ? t('login.redirecting')
                   : phase === 'submitting'
-                    ? AUTH_MESSAGES.submitting
-                    : 'Đăng nhập'}
-                {!busy && <ArrowRight aria-hidden="true" />}
+                    ? t('login.submitting')
+                    : t('login.submit')}
               </Button>
             )}
-            <p className="text-xs leading-5 text-muted-foreground">
-              Chào bạn, hãy bắt đầu một ngày làm việc hiệu quả.
+            <div className="relative flex items-center gap-3 text-xs text-muted-foreground before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border">
+              <span>{t('login.or')}</span>
+            </div>
+            <Button
+              asChild
+              variant="outline"
+              className="h-14 w-full rounded-xl text-base aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+              aria-disabled={busy}
+            >
+              <Link
+                to="/auth/google"
+                aria-label={t('login.continueGoogle')}
+                tabIndex={busy ? -1 : undefined}
+                onClick={(event) => {
+                  if (busy) event.preventDefault();
+                }}
+              >
+                <svg aria-hidden="true" className="size-7" viewBox="0 0 48 48" focusable="false">
+                  <path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.9 6.1-15Z" />
+                  <path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.9l-6.6-5.1c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z" />
+                  <path fill="#FBBC05" d="M12.6 27.6a12 12 0 0 1 0-7.2v-5.3H5.8a20 20 0 0 0 0 17.8l6.8-5.3Z" />
+                  <path fill="#EA4335" d="M24 12c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 6 29.5 4 24 4A20 20 0 0 0 5.8 15.1l6.8 5.3C14.2 15.6 18.7 12 24 12Z" />
+                </svg>
+                {t('login.continueGoogle')}
+              </Link>
+            </Button>
+            <p className="text-center text-sm leading-6 text-muted-foreground">
+              {t('login.encouragement')}
             </p>
+            <div className="flex justify-center">
+              <LanguagePicker />
+            </div>
           </form>
         </div>
       </section>
     </main>
+  );
+}
+
+function LanguagePicker() {
+  const { t, i18n: translation } = useTranslation();
+  return (
+    <div className="flex shrink-0 items-center gap-2">
+      <Languages aria-hidden="true" className="size-4" />
+      <label htmlFor="login-language" className="sr-only">{t('language.label')}</label>
+      <select
+        id="login-language"
+        value={translation.resolvedLanguage === 'en' ? 'en' : 'vi'}
+        onChange={(event) => {
+          const language = event.target.value as AppLanguage;
+          window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+          void i18n.changeLanguage(language);
+        }}
+        className="rounded-md border border-current/20 bg-transparent px-2 py-1 text-sm text-inherit"
+      >
+        <option value="vi" className="text-foreground">{t('language.vietnamese')}</option>
+        <option value="en" className="text-foreground">{t('language.english')}</option>
+      </select>
+    </div>
   );
 }
