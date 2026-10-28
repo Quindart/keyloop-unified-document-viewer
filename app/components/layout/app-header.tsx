@@ -1,6 +1,9 @@
 import { Fragment } from 'react';
 import { Link, useMatches } from 'react-router';
-import { LogOut, UserRound } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Languages, LogOut, UserRound } from 'lucide-react';
+import i18n, { LANGUAGE_STORAGE_KEY } from '~/i18n/i18n';
+import type { AppLanguage } from '~/i18n/resources';
 import { useAuthStore } from '~/features/auth/auth-store';
 import { useLogout } from '~/features/auth/use-logout';
 import { Avatar, AvatarFallback } from '~/components/ui/avatar';
@@ -26,6 +29,7 @@ import { SidebarTrigger } from '~/components/ui/sidebar';
 
 export function AppHeader() {
   const matches = useMatches();
+  const { t, i18n: translation } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const { logout, isPending } = useLogout();
   const breadcrumbs = matches.flatMap((match) => {
@@ -33,18 +37,18 @@ export function AppHeader() {
     if (
       typeof handle !== 'object' ||
       handle === null ||
-      !('breadcrumb' in handle) ||
-      typeof handle.breadcrumb !== 'string'
+      !('breadcrumbKey' in handle) ||
+      typeof handle.breadcrumbKey !== 'string'
     )
       return [];
-    return [{ id: match.id, href: match.pathname, label: handle.breadcrumb }];
+    return [{ id: match.id, href: match.pathname, label: t(handle.breadcrumbKey) }];
   });
 
   return (
     <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 border-b bg-background px-4 md:px-6">
-      <SidebarTrigger aria-label="Bật/tắt thanh điều hướng" />
+      <SidebarTrigger aria-label={t('navigation.toggle')} />
       <Separator orientation="vertical" className="!h-4" />
-      <Breadcrumb aria-label="Đường dẫn hiện tại" className="min-w-0 flex-1">
+      <Breadcrumb aria-label={t('navigation.currentPath')} className="min-w-0 flex-1">
         <BreadcrumbList>
           {breadcrumbs.map((crumb, index) => (
             <Fragment key={crumb.id}>
@@ -66,11 +70,36 @@ export function AppHeader() {
       </Breadcrumb>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="shrink-0 gap-2" aria-label={t('language.label')}>
+            <Languages aria-hidden="true" className="size-4" />
+            <span>{translation.resolvedLanguage === 'en' ? 'EN' : 'VI'}</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-40">
+          <DropdownMenuLabel>{t('language.label')}</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {(['vi', 'en'] as const).map((language: AppLanguage) => (
+            <DropdownMenuItem
+              key={language}
+              onSelect={() => {
+                window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+                void i18n.changeLanguage(language);
+              }}
+              aria-current={translation.resolvedLanguage === language ? 'true' : undefined}
+              className="cursor-pointer"
+            >
+              {t(`language.${language === 'vi' ? 'vietnamese' : 'english'}`)}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
             className="shrink-0 rounded-full"
-            aria-label="Menu tài khoản"
+            aria-label={t('account.menu')}
           >
             <Avatar className="size-9 border">
               <AvatarFallback>
@@ -82,7 +111,7 @@ export function AppHeader() {
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel className="space-y-1">
             <p className="text-xs font-normal text-muted-foreground">
-              Tài khoản
+              {t('account.label')}
             </p>
             {user?.kind === 'google' ? (
               <>
@@ -100,7 +129,7 @@ export function AppHeader() {
             className="cursor-pointer text-destructive focus:text-destructive"
           >
             <LogOut aria-hidden="true" />
-            Đăng xuất
+            {t('account.logout')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

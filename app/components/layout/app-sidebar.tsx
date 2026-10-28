@@ -1,4 +1,5 @@
 import { Home } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router';
 import {
   Sidebar,
@@ -16,6 +17,7 @@ import {
 
 export function AppSidebar() {
   const { setOpenMobile } = useSidebar();
+  const { t } = useTranslation();
 
   return (
     <Sidebar collapsible="icon">
@@ -32,15 +34,15 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Không gian làm việc</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('navigation.workspace')}</SidebarGroupLabel>
           <SidebarGroupContent>
-            <nav aria-label="Điều hướng chính">
+            <nav aria-label={t('navigation.primary')}>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
                     isActive
-                    tooltip="Trang chủ"
+                    tooltip={t('home.label')}
                   >
                     <NavLink
                       to="/home"
@@ -48,7 +50,7 @@ export function AppSidebar() {
                       onClick={() => setOpenMobile(false)}
                     >
                       <Home aria-hidden="true" />
-                      <span>Trang chủ</span>
+                      <span>{t('home.label')}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -59,7 +61,7 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="border-t p-4 group-data-[collapsible=icon]:hidden">
         <p className="text-xs text-muted-foreground">
-          Không gian làm việc của bạn
+          {t('navigation.footer')}
         </p>
       </SidebarFooter>
     </Sidebar>
