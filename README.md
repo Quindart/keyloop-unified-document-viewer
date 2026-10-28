@@ -1,138 +1,151 @@
-# Welcome to React Router!
+# Keyloop Unified Document Viewer
 
-A modern, production-ready template for building full-stack React applications using React Router.
+Technical assessment project for **Scenario D: The Unified Document Viewer**.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+## Overview
 
-## Features
+The assessment scenario is a frontend application that gives users one consolidated view of vehicle-related documents. A user enters a valid Vehicle Identification Number (VIN), and the application aggregates document metadata from two mocked external systems: the Sales System API and the Service System API. The intended experience brings sales and service history together in a single, searchable-by-vehicle view.
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+The repository currently contains a React Router application scaffold with a login flow, workspace shell, and Google OAuth prototype. The VIN lookup, mocked document endpoints, aggregation flow, and document timeline described by the assessment scenario are **not implemented in the current codebase**. This distinction is stated explicitly so the assessment brief is not mistaken for delivered functionality.
+
+## Key Features
+
+### Assessment goals
+
+- **Single VIN search:** Validate a VIN and use it as the lookup key for vehicle documents.
+- **Parallel aggregation:** Request Sales System and Service System data concurrently to reduce total wait time.
+- **Partial failure resilience:** Keep available results visible if one source is delayed or unavailable, and communicate which source could not be reached.
+- **Unified document list:** Present normalized sales and service records in one chronological view, with a clear source badge on each document.
+- **Responsive interaction states:** Provide loading skeletons, useful empty states, inline errors, and retry actions across screen sizes.
+
+### Current repository capabilities
+
+- React Router SSR application structure with a login page and protected workspace shell.
+- Username/password demo login restricted to the `admin` account.
+- Server-side Google OAuth authorization-code flow prototype.
+- Reusable UI primitives, Tailwind CSS styling, and Vitest configuration.
+
+The VIN and document-viewer assessment goals above describe the target product behavior; they are not yet available as working features in this repository.
+
+## Architecture and System Design
+
+### Target document aggregation design
+
+The intended request path follows a Backend-for-Frontend (BFF) pattern:
+
+1. The browser submits a VIN to an application route.
+2. The server-side route validates and normalizes the VIN, then requests the Sales System and Service System mock endpoints concurrently.
+3. Each source response is mapped into a shared document model. Source-specific fields remain behind the service boundary.
+4. The route returns the normalized records and per-source availability to the UI. A failure or timeout from one source should not discard successful results from the other.
+5. The UI sorts the combined documents by their event date and labels each record with its originating system.
+
+Keeping external-system calls behind a server route avoids coupling browser components to multiple API contracts and provides a natural place for input validation, timeout handling, response normalization, and safe error reporting. **This BFF document flow is an architectural goal, not implemented behavior in the current repository.**
+
+### Current application architecture
+
+The project uses React Router Framework Mode with server-side rendering. Route modules live in `app/routes`; authentication UI and session logic are grouped under `app/features/auth`; and shared layout and UI components live under `app/components`. Zustand persists the client-side demo session, while Google OAuth state and identity are handled by server-side session utilities.
+
+## Project Structure
+
+The tree below reflects the current repository rather than the proposed VIN feature layout:
+
+```text
+.
+├── app/
+│   ├── components/
+│   │   ├── layout/             # Workspace header and sidebar
+│   │   └── ui/                 # Reusable UI primitives
+│   ├── features/
+│   │   └── auth/                # Demo authentication and Google OAuth
+│   ├── hooks/                   # Shared React hooks
+│   ├── lib/                     # Small shared utilities
+│   ├── routes/                  # Login, workspace, and auth route modules
+│   ├── root.tsx                 # Application document and providers
+│   ├── routes.ts                # Route configuration
+│   └── app.css                  # Global styles and Tailwind entry point
+├── public/                      # Static assets
+├── docs/                        # Project documentation
+├── package.json                 # Scripts and dependencies
+├── react-router.config.ts       # React Router SSR configuration
+├── vite.config.ts               # Vite configuration
+└── vitest.config.ts             # Vitest configuration
+```
+
+For the planned document viewer, a natural extension would add route modules for VIN search and document results, dedicated document components, a server-side aggregation service, shared document/source types, and tests. Those directories are not present yet.
 
 ## Getting Started
 
+### Prerequisites
+
+- Node.js **22 or newer** (the project uses Vite 8 and React Router 8).
+- pnpm, matching the checked-in `pnpm-lock.yaml`.
+- Git.
+
 ### Installation
 
-Install the dependencies:
-
 ```bash
-npm install
+git clone <repository-url>
+cd keyloop-unified-document-viewer
+pnpm install
+pnpm dev
 ```
 
-### Development
-
-Start the development server with HMR:
-
-```bash
-npm run dev
-```
-
-Your application will be available at `http://localhost:5173`.
+Open [http://localhost:5173](http://localhost:5173) in your browser. The current app opens its login experience; the VIN document lookup described in the assessment scenario is not implemented yet.
 
 ### Demo login
 
-Demo login accounts:
+| Username | Password |
+| --- | --- |
+| `admin` | `admin123456Aa@` |
 
-| Username | Password | Access |
-| --- | --- | --- |
-| `admin` | `admin123456Aa@` | Workspace |
+### Optional Google OAuth setup
 
-Only this demo account can sign in with a username and password. This browser-side
-demo is not server authorization; a production app needs server-side account
-storage and authentication on protected loaders and APIs.
+Google login requires a Google OAuth Web application client. Copy `.env.example` to `.env`, provide the client ID and secret, set `AUTH_SESSION_SECRET`, and register `http://localhost:5173/auth/google/callback` as an authorized redirect URI in Google Cloud Console. Keep `.env` out of source control. Google login is a prototype and is independent of the planned mocked document APIs.
 
-### Google login prototype
+## Testing and Quality Checks
 
-The login page also offers **Tiếp tục với Google**. Google OAuth is a real server-side
-authorization-code flow. Dashboard content and the current client-side route guard
-remain prototype behavior, so this is not production authorization.
-
-To enable Google login locally:
-
-1. Create or select a project in [Google Cloud Console](https://console.cloud.google.com/).
-2. Configure the OAuth consent screen and add a test user if the app is in testing mode.
-3. Under **APIs & Services → Credentials**, create an OAuth client with application
-   type **Web application**. Add this exact authorized redirect URI:
-   `http://localhost:5173/auth/google/callback`.
-4. Copy `.env.example` to `.env` and fill in the client ID and client secret. Generate
-   `AUTH_SESSION_SECRET` with `openssl rand -base64 32`.
-5. Run `pnpm dev` and select **Tiếp tục với Google** on `/login`.
-
-The redirect URI in `GOOGLE_REDIRECT_URI` must exactly match the URI registered in
-Google Cloud, including scheme and path. Register the corresponding HTTPS callback
-for each deployed hostname. This prototype requests only `openid email profile` and
-does not request Google API access. Keep `.env` and client secrets out of source
-control and configure production values in the deployment's server environment.
-OAuth setup and redirect URI requirements are described in [Google's web server OAuth guide](https://developers.google.com/identity/protocols/oauth2/web-server).
-
-### Business chatbot demo
-
-Use the bottom-right chatbot button on any workspace page. The drawer uses a
-quarter of the desktop viewport (minimum 360px) and the full width on mobile.
-Choose a suggested question or type a message about revenue, orders, or returning
-customers. Replies use the existing dashboard fixtures and are explicitly simulated.
-
-Enter sends a message; Shift+Enter adds a new line. Attachments can be selected,
-removed, and sent, but only their names and sizes are retained locally: no files
-are uploaded or analyzed. Conversation and draft state survive closing/reopening
-and workspace navigation; reload or logout clears them.
-
-## Building for Production
-
-Create a production build:
+Run the configured unit and component test suite with:
 
 ```bash
-npm run build
+pnpm test
 ```
 
-## Deployment
-
-### Docker Deployment
-
-To build and run using Docker:
+Additional project checks:
 
 ```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
+pnpm run typecheck
+pnpm run build
+pnpm run test:e2e
 ```
 
-The containerized application can be deployed to any platform that supports Docker, including:
+Vitest is configured to discover tests under `tests/unit/` and `tests/hooks/`, using the JSDOM environment and `tests/setup.ts`. **There is currently no `tests/` directory in the repository**, so the test command may report that no test files were found until tests are added. The test scripts and configuration are present, but this README does not claim unrun tests pass.
 
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
+## AI Collaboration Narrative
 
-### DIY Deployment
+Generative AI was used as an engineering collaborator to accelerate exploration, documentation, and implementation review while keeping technical decisions and final acceptance with the project author.
 
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
+### Collaboration strategy
 
-Make sure to deploy the output of `npm run build`
+- Break work into bounded tasks with explicit acceptance criteria, repository constraints, and expected behavior.
+- Use AI to inspect the existing route structure, identify relevant modules, and propose implementation options before changing code.
+- Keep the assessment scenario and the actual repository state distinct; generated descriptions must not imply an unfinished capability is already delivered.
 
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
+### Verification and refinement
 
-## Styling
+- Review generated changes against the real dependency versions, scripts, route configuration, and component conventions in the repository.
+- Inspect diffs and search for stale references after structural changes.
+- Run type generation and TypeScript checks for code changes; run focused tests when tests exist and are relevant.
+- Treat generated code and documentation as drafts: correct mismatched assumptions, remove unsupported claims, and retain human review of behavior and security-sensitive authentication paths.
 
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+### Quality assurance and reliability
 
----
+- Validate authentication inputs and keep session data allowlisted rather than trusting arbitrary persisted values.
+- Preserve the existing Google OAuth flow when changing demo username/password behavior.
+- For the planned document aggregation feature, apply VIN validation, bounded request timeouts, per-source error reporting, normalized response types, deterministic sorting, and tests for success, empty, delayed, and partial-failure cases before describing it as production-ready.
+- Prefer observable evidence from typechecks, tests, and build output over claims based only on generated suggestions.
 
-Built with ❤️ using React Router.
+AI assistance supports the engineering process; it does not replace code review, security review, or verification against the assessment requirements.
 
-Login UI adapts the official [shadcn login-04 block](https://ui.shadcn.com/blocks/login), with Button, Input, Label and Card from the [new-york registry](https://ui.shadcn.com/r/styles/new-york/button.json). Imports use the existing `~/` alias and Tailwind 4 theme.
-# react-template
+## Production Readiness Notes
+
+This repository is an assessment scaffold and includes prototype authentication. The unified VIN document workflow and its mocked Sales and Service APIs must be implemented and tested before the project can be considered complete against Scenario D. Production deployment would also require server-side identity and access controls, operational logging, API timeout and retry policies appropriate to the upstream systems, and deployment-specific secret management.
