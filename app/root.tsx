@@ -13,6 +13,7 @@ import { AppProviders } from '~/providers/app-providers';
 import { useTranslation } from 'react-i18next';
 
 export const links: Route.LinksFunction = () => [
+  { rel: 'icon', type: 'image/svg+xml', href: '/keyloop-logo.svg' },
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
     rel: 'preconnect',
