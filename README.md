@@ -2,6 +2,10 @@
 
 Technical assessment project for **Scenario D: The Unified Document Viewer**.
 
+<img width="1469" height="824" alt="Ảnh màn hình 2026-10-30 lúc 19 10 18" src="https://github.com/user-attachments/assets/cb1d805a-d2ed-43ab-8da4-94a0798d1d4d" />
+<img width="1473" height="598" alt="Ảnh màn hình 2026-10-30 lúc 19 10 46" src="https://github.com/user-attachments/assets/c40c729d-2efa-475f-a53f-844288823aa8" />
+
+
 ## Overview
 
 The assessment scenario is a frontend application that gives users one consolidated view of vehicle-related documents. A user enters a valid Vehicle Identification Number (VIN), and the application aggregates document metadata from two mocked external systems: the Sales System API and the Service System API. The intended experience brings sales and service history together in a single, searchable-by-vehicle view.
