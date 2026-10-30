@@ -1,36 +1,33 @@
-import { getVehicleImage } from './vehicle-images';
+import type { Vehicle } from './vehicle-types';
 
 type VehicleCardProps = {
-  vin: string;
-  index: number;
-  onSelect: (vin: string) => void;
+  vehicle: Vehicle;
+  onSelect: (vehicle: Vehicle) => void;
 };
 
-export function VehicleCard({ vin, index, onSelect }: VehicleCardProps) {
-  const image = getVehicleImage(vin);
-
+export function VehicleCard({ vehicle, onSelect }: VehicleCardProps) {
   return (
     <button
       type="button"
-      onClick={() => onSelect(vin)}
+      onClick={() => onSelect(vehicle)}
       className="group flex w-full min-h-40 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
     >
       <span className="flex h-36 w-full shrink-0 items-center justify-center bg-slate-50 px-4 py-3">
         <img
-          src={image}
+          src={vehicle.image}
           alt=""
           loading="lazy"
           className="size-full object-contain transition-transform duration-200 group-hover:scale-105"
         />
       </span>
       <span className="flex flex-1 flex-col p-5 sm:p-6">
-        <span className="inline-flex mt-2 items-center gap-2 border-b-2 pb-2 text-[16px] font-semibold tracking-wide text-slate-600">
-          Vehicle {String(index + 1).padStart(2, '0')}
+        <span className="mt-2 line-clamp-1 border-b-2 pb-2 text-base font-semibold tracking-wide text-slate-700">
+          {vehicle.vehicle_name}
         </span>
-        <span className="mt-4 gap-2 items-center flex text-sm  text-slate-700">
+        <span className="mt-4 flex items-center gap-2 text-sm text-slate-700">
           VIN:{' '}
-          <span className=" block break-all font-mono text-sm leading-6 text-slate-900">
-            {vin}
+          <span className="block break-all font-mono text-sm leading-6 text-slate-900">
+            {vehicle.vin}
           </span>
         </span>
 

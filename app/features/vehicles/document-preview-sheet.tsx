@@ -7,7 +7,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '~/components/ui/sheet';
-import type { VehicleDocument } from '~/features/vehicles/document-card';
+import type { VehicleDocument } from '~/features/vehicles/vehicle-types';
 
 type DocumentPreviewSheetProps = {
   document: VehicleDocument | null;
@@ -15,25 +15,17 @@ type DocumentPreviewSheetProps = {
 };
 
 type PreviewSample = {
-  fileName: string;
-  src: string;
   formatLabel: string;
 };
 
 const previewSamples: Record<VehicleDocument['format'], PreviewSample> = {
   PDF: {
-    fileName: 'purchase-pdf.pdf',
-    src: '/files/purchase-pdf.pdf',
     formatLabel: 'PDF document',
   },
   DOCX: {
-    fileName: 'purchase-word.docx',
-    src: '/files/purchase-word.docx',
     formatLabel: 'Word document (.docx)',
   },
   XLS: {
-    fileName: 'maintain-excel.xlsx',
-    src: '/files/maintain-excel.xlsx',
     formatLabel: 'Excel workbook (.xlsx)',
   },
 };
@@ -334,6 +326,7 @@ export function DocumentPreviewSheet({
   onClose,
 }: DocumentPreviewSheetProps) {
   const sample = document ? previewSamples[document.format] : null;
+  const fileName = document?.file_url.split('/').at(-1) ?? '';
   const displayDate = document
     ? new Date(document.date).toLocaleDateString()
     : '';
@@ -352,9 +345,9 @@ export function DocumentPreviewSheet({
         {document && sample && (
           <>
             <SheetHeader className="shrink-0 border-b px-6 py-5 pr-14">
-              <SheetTitle className="break-words">{document.title}</SheetTitle>
+              <SheetTitle className="break-words">{document.name}</SheetTitle>
               <SheetDescription>
-                Previewing the shared mock file {sample.fileName}.
+                Previewing {fileName}.
               </SheetDescription>
             </SheetHeader>
             <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_auto] overflow-hidden lg:grid-cols-[minmax(0,1fr)_17rem] lg:grid-rows-1">
@@ -362,15 +355,15 @@ export function DocumentPreviewSheet({
                 {document.format === 'PDF' && (
                   <PdfPreview
                     key={document.id}
-                    src={sample.src}
-                    title={document.title}
+                    src={document.file_url}
+                    title={document.name}
                   />
                 )}
                 {document.format === 'DOCX' && (
-                  <DocxPreview key={document.id} src={sample.src} />
+                  <DocxPreview key={document.id} src={document.file_url} />
                 )}
                 {document.format === 'XLS' && (
-                  <ExcelPreview key={document.id} src={sample.src} />
+                  <ExcelPreview key={document.id} src={document.file_url} />
                 )}
               </main>
               <aside className="min-h-0 overflow-y-auto border-t bg-white p-5 lg:border-l lg:border-t-0">
@@ -378,7 +371,7 @@ export function DocumentPreviewSheet({
                   File information
                 </h3>
                 <dl className="mt-4 divide-y">
-                  <MetadataRow label="File name" value={sample.fileName} />
+                  <MetadataRow label="File name" value={fileName} />
                   <MetadataRow label="Format" value={sample.formatLabel} />
                   <MetadataRow label="Document type" value={document.type} />
                   <MetadataRow label="Source" value={document.source} />

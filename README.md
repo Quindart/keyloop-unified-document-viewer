@@ -41,6 +41,34 @@ The intended request path follows a Backend-for-Frontend (BFF) pattern:
 
 Keeping external-system calls behind a server route avoids coupling browser components to multiple API contracts and provides a natural place for input validation, timeout handling, response normalization, and safe error reporting. **This BFF document flow is an architectural goal, not implemented behavior in the current repository.**
 
+### Vehicle-document ERD
+
+The mock data stores a list of documents inside each vehicle. In a relational model, each document row references its vehicle through `vehicle_vin`:
+
+```mermaid
+erDiagram
+    VEHICLE ||--|{ DOCUMENT : has
+
+    VEHICLE {
+        string vin PK
+        string vehicle_name
+        string image
+    }
+
+    DOCUMENT {
+        string vehicle_vin PK, FK
+        string id PK
+        string name
+        date date
+        string file_url
+        string type
+        string source
+        string format
+    }
+```
+
+`DOCUMENT` uses the composite primary key (`vehicle_vin`, `id`), because the mock document IDs repeat across vehicles. Every document belongs to exactly one vehicle, and each vehicle has one or more documents.
+
 ### Current application architecture
 
 The project uses React Router Framework Mode with server-side rendering. Route modules live in `app/routes`; authentication UI and session logic are grouped under `app/features/auth`; and shared layout and UI components live under `app/components`. Zustand persists the client-side demo session, while Google OAuth state and identity are handled by server-side session utilities.
