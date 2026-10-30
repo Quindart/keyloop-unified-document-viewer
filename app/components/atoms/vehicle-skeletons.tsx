@@ -1,10 +1,18 @@
 import { Skeleton } from '~/components/ui/skeleton';
+import { useTranslation } from 'react-i18next';
 
 export function VehicleGridSkeleton() {
+  const { t } = useTranslation();
   return (
-    <div role="status" aria-label="Searching vehicles" className="space-y-4">
-      <p className="text-sm font-medium text-slate-600">Searching vehicles…</p>
-      <span className="sr-only">Please wait while matching vehicles load.</span>
+    <div
+      role="status"
+      aria-label={t('home.loadingVehicles')}
+      className="space-y-4"
+    >
+      <p className="text-sm font-medium text-slate-600">
+        {t('home.searching')}
+      </p>
+      <span className="sr-only">{t('home.loadingVehicles')}</span>
       <ul
         aria-hidden="true"
         className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"

@@ -5,6 +5,7 @@ import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { PanelLeft } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { useIsMobile } from '~/hooks/use-mobile';
 import { cn } from '~/lib/utils';
@@ -193,6 +194,7 @@ const Sidebar = React.forwardRef<
     },
     ref,
   ) => {
+    const { t } = useTranslation();
     const { isMobile, state, openMobile, setOpenMobile, triggerRef } =
       useSidebar();
 
@@ -231,9 +233,9 @@ const Sidebar = React.forwardRef<
             side={side}
           >
             <SheetHeader className="sr-only">
-              <SheetTitle>Điều hướng</SheetTitle>
+              <SheetTitle>{t('navigation.mobileTitle')}</SheetTitle>
               <SheetDescription>
-                Điều hướng trong không gian làm việc.
+                {t('navigation.mobileDescription')}
               </SheetDescription>
             </SheetHeader>
             <div className="flex h-full w-full flex-col">{children}</div>
@@ -293,6 +295,7 @@ const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
+  const { t } = useTranslation();
   const { toggleSidebar, triggerRef } = useSidebar();
 
   return (
@@ -313,7 +316,7 @@ const SidebarTrigger = React.forwardRef<
       {...props}
     >
       <PanelLeft />
-      <span className="sr-only">Bật/tắt thanh điều hướng</span>
+      <span className="sr-only">{t('navigation.toggle')}</span>
     </Button>
   );
 });
@@ -323,16 +326,17 @@ const SidebarRail = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<'button'>
 >(({ className, ...props }, ref) => {
+  const { t } = useTranslation();
   const { toggleSidebar } = useSidebar();
 
   return (
     <button
       ref={ref}
       data-sidebar="rail"
-      aria-label="Toggle Sidebar"
+      aria-label={t('navigation.toggle')}
       tabIndex={-1}
       onClick={toggleSidebar}
-      title="Toggle Sidebar"
+      title={t('navigation.toggle')}
       className={cn(
         'absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] hover:after:bg-sidebar-border group-data-[side=left]:-right-4 group-data-[side=right]:left-0 sm:flex',
         '[[data-side=left]_&]:cursor-w-resize [[data-side=right]_&]:cursor-e-resize',

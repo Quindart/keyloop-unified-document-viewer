@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react';
 import { SnackbarProvider, closeSnackbar } from 'notistack';
 import { X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { SessionBootstrap } from '~/features/auth/session-bootstrap';
 import '~/i18n/i18n';
 
 export function AppProviders({ children }: { children: ReactNode }) {
+  const { t } = useTranslation();
   return (
     <SnackbarProvider
       anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
@@ -14,7 +16,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       action={(key) => (
         <button
           type="button"
-          aria-label="Đóng thông báo"
+          aria-label={t('accessibility.closeNotification')}
           onClick={() => closeSnackbar(key)}
           className="rounded p-1 focus-visible:outline-2 focus-visible:outline-offset-2"
         >

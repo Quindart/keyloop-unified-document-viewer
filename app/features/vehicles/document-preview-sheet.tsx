@@ -8,6 +8,8 @@ import {
   SheetTitle,
 } from '~/components/ui/sheet';
 import { Button } from '~/components/ui/button';
+import { useTranslation } from 'react-i18next';
+import { getDocumentTypeTranslationKey } from './document-labels';
 import type { VehicleDocument } from '~/features/vehicles/vehicle-types';
 import { Download } from 'lucide-react';
 
@@ -17,18 +19,18 @@ type DocumentPreviewSheetProps = {
 };
 
 type PreviewSample = {
-  formatLabel: string;
+  formatLabelKey: string;
 };
 
 const previewSamples: Record<VehicleDocument['format'], PreviewSample> = {
   PDF: {
-    formatLabel: 'PDF document',
+    formatLabelKey: 'documents.formatPdf',
   },
   DOCX: {
-    formatLabel: 'Word document (.docx)',
+    formatLabelKey: 'documents.formatDocx',
   },
   XLS: {
-    formatLabel: 'Excel workbook (.xlsx)',
+    formatLabelKey: 'documents.formatXls',
   },
 };
 
@@ -52,6 +54,7 @@ function PreviewMessage({
 }
 
 function PdfPreview({ src, title }: { src: string; title: string }) {
+  const { t } = useTranslation();
   const [state, setState] = useState<LoadState>('loading');
   const [objectUrl, setObjectUrl] = useState('');
 
@@ -85,18 +88,16 @@ function PdfPreview({ src, title }: { src: string; title: string }) {
   }, [src]);
 
   if (state === 'loading')
-    return <PreviewMessage>Loading PDF preview…</PreviewMessage>;
+    return <PreviewMessage>{t('documents.loadingPdf')}</PreviewMessage>;
   if (state === 'error' || !objectUrl) {
     return (
-      <PreviewMessage role="alert">
-        Could not load the PDF sample preview.
-      </PreviewMessage>
+      <PreviewMessage role="alert">{t('documents.pdfError')}</PreviewMessage>
     );
   }
 
   return (
     <iframe
-      title={`Preview of ${title}`}
+      title={t('documents.previewOf', { title })}
       src={objectUrl}
       className="h-full min-h-72 w-full rounded-lg border bg-white"
     />
@@ -104,6 +105,7 @@ function PdfPreview({ src, title }: { src: string; title: string }) {
 }
 
 function DocxPreview({ src }: { src: string }) {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<LoadState>('loading');
 
@@ -123,7 +125,7 @@ function DocxPreview({ src }: { src: string }) {
         if (!active) return;
         const { renderAsync } = await import('docx-preview');
         if (!active) return;
-        await renderAsync(data, container, undefined, {
+        await renderAsync(data, container!, undefined, {
           className: 'docx-preview',
           inWrapper: true,
         });
@@ -149,13 +151,13 @@ function DocxPreview({ src }: { src: string }) {
       />
       {state === 'loading' && (
         <div className="absolute inset-0 p-4 sm:p-6">
-          <PreviewMessage>Loading Word preview…</PreviewMessage>
+          <PreviewMessage>{t('documents.loadingWord')}</PreviewMessage>
         </div>
       )}
       {state === 'error' && (
         <div className="absolute inset-0 p-4 sm:p-6">
           <PreviewMessage role="alert">
-            Could not render the Word sample preview.
+            {t('documents.wordError')}
           </PreviewMessage>
         </div>
       )}
@@ -164,7 +166,9 @@ function DocxPreview({ src }: { src: string }) {
 }
 
 type ExcelPreviewState =
-  | { status: 'loading' | 'error' | 'empty' }
+  | { status: 'loading' }
+  | { status: 'error' }
+  | { status: 'empty' }
   | { status: 'ready'; worksheetName: string; rows: string[][] };
 
 function formatCellValue(value: CellValue | undefined): string {
@@ -201,6 +205,7 @@ function columnLabel(columnIndex: number) {
 }
 
 function ExcelPreview({ src }: { src: string }) {
+  const { t } = useTranslation();
   const [preview, setPreview] = useState<ExcelPreviewState>({
     status: 'loading',
   });
@@ -256,21 +261,17 @@ function ExcelPreview({ src }: { src: string }) {
   }, [src]);
 
   if (preview.status === 'loading') {
-    return <PreviewMessage>Loading spreadsheet preview…</PreviewMessage>;
+    return <PreviewMessage>{t('documents.loadingSpreadsheet')}</PreviewMessage>;
   }
   if (preview.status === 'error') {
     return (
       <PreviewMessage role="alert">
-        Could not load the Excel sample preview.
+        {t('documents.spreadsheetError')}
       </PreviewMessage>
     );
   }
   if (preview.status === 'empty') {
-    return (
-      <PreviewMessage>
-        This workbook has no worksheet data to preview.
-      </PreviewMessage>
-    );
+    return <PreviewMessage>{t('documents.spreadsheetEmpty')}</PreviewMessage>;
   }
 
   const columnCount = preview.rows[0]?.length ?? 0;
@@ -327,11 +328,17 @@ export function DocumentPreviewSheet({
   document,
   onClose,
 }: DocumentPreviewSheetProps) {
+  const { t, i18n } = useTranslation();
   const sample = document ? previewSamples[document.format] : null;
   const fileName = document?.file_url.split('/').at(-1) ?? '';
   const displayDate = document
-    ? new Date(document.date).toLocaleDateString()
+    ? new Date(document.date).toLocaleDateString(
+        i18n.resolvedLanguage === 'en' ? 'en-US' : 'vi-VN',
+      )
     : '';
+  const documentTypeKey = document
+    ? getDocumentTypeTranslationKey(document.type)
+    : undefined;
 
   return (
     <Sheet
@@ -352,12 +359,14 @@ export function DocumentPreviewSheet({
                   <SheetTitle className="break-words">
                     {document.name}
                   </SheetTitle>
-                  <SheetDescription>Previewing {fileName}.</SheetDescription>
+                  <SheetDescription>
+                    {t('documents.previewing', { fileName })}
+                  </SheetDescription>
                 </div>
                 <Button asChild variant="outline" className="shrink-0">
                   <a href={document.file_url} download={fileName}>
                     <Download aria-hidden="true" />
-                    Download document
+                    {t('documents.download')}
                   </a>
                 </Button>
               </div>
@@ -380,18 +389,40 @@ export function DocumentPreviewSheet({
               </main>
               <aside className="min-h-0 overflow-y-auto border-t bg-white p-5 lg:border-l lg:border-t-0">
                 <h3 className="text-sm font-semibold text-slate-900">
-                  File information
+                  {t('documents.fileInformation')}
                 </h3>
                 <dl className="mt-4 divide-y">
-                  <MetadataRow label="File name" value={fileName} />
-                  <MetadataRow label="Format" value={sample.formatLabel} />
-                  <MetadataRow label="Document type" value={document.type} />
-                  <MetadataRow label="Source" value={document.source} />
-                  <MetadataRow label="Date" value={displayDate} />
+                  <MetadataRow
+                    label={t('documents.fileName')}
+                    value={fileName}
+                  />
+                  <MetadataRow
+                    label={t('documents.format')}
+                    value={t(sample.formatLabelKey)}
+                  />
+                  <MetadataRow
+                    label={t('documents.type')}
+                    value={
+                      documentTypeKey
+                        ? t(documentTypeKey)
+                        : t('documents.typeUnknown', { type: document.type })
+                    }
+                  />
+                  <MetadataRow
+                    label={t('documents.source')}
+                    value={
+                      document.source === 'Sales'
+                        ? t('documents.sourceSales')
+                        : t('documents.sourceService')
+                    }
+                  />
+                  <MetadataRow
+                    label={t('documents.date')}
+                    value={displayDate}
+                  />
                 </dl>
                 <p className="mt-5 rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-500">
-                  This sample file is used as mock content for all documents in
-                  this format.
+                  {t('documents.mockNote')}
                 </p>
               </aside>
             </div>

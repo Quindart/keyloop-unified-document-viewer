@@ -1,4 +1,5 @@
 import type { Vehicle } from './vehicle-types';
+import { useTranslation } from 'react-i18next';
 
 type VehicleCardProps = {
   vehicle: Vehicle;
@@ -6,6 +7,7 @@ type VehicleCardProps = {
 };
 
 export function VehicleCard({ vehicle, onSelect }: VehicleCardProps) {
+  const { t } = useTranslation();
   return (
     <button
       type="button"
@@ -32,7 +34,7 @@ export function VehicleCard({ vehicle, onSelect }: VehicleCardProps) {
         </span>
 
         <span className="mt-auto flex w-full items-center justify-between border-t border-slate-100 pt-4 text-sm font-semibold text-blue-700 group-hover:text-blue-800">
-          <span>View documents</span>
+          <span>{t('documents.view')}</span>
           <span
             aria-hidden="true"
             className="text-lg transition-transform group-hover:translate-x-1"

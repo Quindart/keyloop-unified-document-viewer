@@ -1,5 +1,7 @@
 import { Clock3 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { AnimatedListItem } from '~/components/atoms/animated-list-item';
+import { getDocumentTypeTranslationKey } from './document-labels';
 import type { VehicleDocument } from './vehicle-types';
 
 type DocumentCardProps = {
@@ -9,6 +11,12 @@ type DocumentCardProps = {
 };
 
 export function DocumentCard({ document, index, onSelect }: DocumentCardProps) {
+  const { t, i18n } = useTranslation();
+  const sourceLabel =
+    document.source === 'Sales'
+      ? t('documents.sourceSales')
+      : t('documents.sourceService');
+  const typeTranslationKey = getDocumentTypeTranslationKey(document.type);
   return (
     <AnimatedListItem index={index} className="w-full min-w-0">
       <button
@@ -20,7 +28,7 @@ export function DocumentCard({ document, index, onSelect }: DocumentCardProps) {
         <span className="flex items-start gap-3">
           <img
             src={`/images/document-types/${document.format.toLowerCase()}.png`}
-            alt={`${document.format} file`}
+            alt={t('documents.file', { format: document.format })}
             width={48}
             height={48}
             loading="lazy"
@@ -35,7 +43,9 @@ export function DocumentCard({ document, index, onSelect }: DocumentCardProps) {
               {document.name}
             </span>
             <span className="mt-1 block text-sm text-slate-500">
-              {document.type}
+              {typeTranslationKey
+                ? t(typeTranslationKey)
+                : t('documents.typeUnknown', { type: document.type })}
             </span>
           </span>
         </span>
@@ -43,14 +53,16 @@ export function DocumentCard({ document, index, onSelect }: DocumentCardProps) {
           <span
             className={`rounded-full px-2.5 py-1 text-xs font-semibold ${document.source === 'Sales' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'}`}
           >
-            {document.source}
+            {sourceLabel}
           </span>
           <time
             dateTime={document.date}
             className="flex shrink-0 items-center gap-1.5 text-xs text-slate-500 sm:text-sm"
           >
             <Clock3 className="size-4" />
-            {new Date(document.date).toLocaleDateString()}
+            {new Date(document.date).toLocaleDateString(
+              i18n.resolvedLanguage === 'en' ? 'en-US' : 'vi-VN',
+            )}
           </time>
         </span>
       </button>
