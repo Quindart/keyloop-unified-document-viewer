@@ -1,13 +1,5 @@
 import { Clock3 } from 'lucide-react';
-
-export type VehicleDocument = {
-  id: string;
-  title: string;
-  date: string;
-  type: string;
-  source: 'Sales' | 'Service';
-  format: 'PDF' | 'DOCX' | 'XLS';
-};
+import type { VehicleDocument } from './vehicle-types';
 
 type DocumentCardProps = {
   document: VehicleDocument;
@@ -38,7 +30,7 @@ export function DocumentCard({ document, onSelect }: DocumentCardProps) {
               aria-level={3}
               className="block font-medium text-slate-900"
             >
-              {document.title}
+              {document.name}
             </span>
             <span className="mt-1 block text-sm text-slate-500">
               {document.type}

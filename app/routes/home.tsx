@@ -4,94 +4,23 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { VehicleCard } from '~/features/vehicles/vehicle-card';
-import { getVehicleImage } from '~/features/vehicles/vehicle-images';
-import {
-  DocumentCard,
-  type VehicleDocument,
-} from '~/features/vehicles/document-card';
+import { DocumentCard } from '~/features/vehicles/document-card';
 import { DocumentPreviewSheet } from '~/features/vehicles/document-preview-sheet';
+import {
+  vehicleMockData,
+  type Vehicle,
+  type VehicleDocument,
+} from '~/features/vehicles/vehicle-types';
 
-const vinStartingCharacters = '0123456789ABCDEFGHJKLMNPRSTUVWXYZ';
-const mockVinsPerStartingCharacter = 7;
-const generatedVehicleVins = Array.from(vinStartingCharacters).flatMap(
-  (firstCharacter, characterIndex) =>
-    Array.from({ length: mockVinsPerStartingCharacter }, (_, sequenceIndex) => {
-      const serial = String(
-        characterIndex * mockVinsPerStartingCharacter + sequenceIndex + 1,
-      ).padStart(7, '0');
-      return `${firstCharacter}HGCM82633${serial}`;
-    }),
-);
-const vehicleVins = [
-  '1HGCM82633A004352',
-  '1FTFW1E50NFA12345',
-  'WBA3A5C50DF123456',
-  'JHMCM56557C404453',
-  '5YJ3E1EA7KF317890',
-  'WVWZZZ1JZXW000001',
-  ...generatedVehicleVins,
-];
+const mockVehicles = vehicleMockData.vehicles;
 
-const salesDocuments: VehicleDocument[] = [
-  {
-    id: 's1',
-    title: 'Purchase Agreement',
-    type: 'Contract',
-    date: '2025-03-12T10:30:00Z',
-    source: 'Sales',
-    format: 'PDF',
-  },
-  {
-    id: 's2',
-    title: 'Deposit Receipt',
-    type: 'Receipt',
-    date: '2025-03-10T08:15:00Z',
-    source: 'Sales',
-    format: 'PDF',
-  },
-  {
-    id: 's3',
-    title: 'Payment Invoice',
-    type: 'Invoice',
-    date: '2025-03-12T09:00:00Z',
-    source: 'Sales',
-    format: 'DOCX',
-  },
-];
-const serviceDocuments: VehicleDocument[] = [
-  {
-    id: 'v1',
-    title: 'Pre-Delivery Inspection',
-    type: 'Inspection',
-    date: '2025-03-13T11:00:00Z',
-    source: 'Service',
-    format: 'PDF',
-  },
-  {
-    id: 'v2',
-    title: 'Workshop Repair Schedule',
-    type: 'Repair',
-    date: '2025-02-20T14:00:00Z',
-    source: 'Service',
-    format: 'DOCX',
-  },
-  {
-    id: 'v3',
-    title: 'Maintenance History',
-    type: 'Maintenance',
-    date: '2025-01-18T09:30:00Z',
-    source: 'Service',
-    format: 'XLS',
-  },
-];
-
-async function fetchSalesDocuments(_vin: string) {
+async function fetchSalesDocuments(vehicle: Vehicle) {
   await new Promise((resolve) => setTimeout(resolve, 350));
-  return salesDocuments;
+  return vehicle.documents.filter((document) => document.source === 'Sales');
 }
-async function fetchServiceDocuments(_vin: string) {
+async function fetchServiceDocuments(vehicle: Vehicle) {
   await new Promise((resolve) => setTimeout(resolve, 650));
-  return serviceDocuments;
+  return vehicle.documents.filter((document) => document.source === 'Service');
 }
 
 export function meta() {
@@ -115,8 +44,13 @@ export default function Home() {
   const [vehiclesPerPage, setVehiclesPerPage] = useState(5);
   const suggestions =
     vin.length > 0
-      ? vehicleVins.filter((item) => item.startsWith(vin.trim().toUpperCase()))
+      ? mockVehicles.filter((vehicle) =>
+          vehicle.vin.startsWith(vin.trim().toUpperCase()),
+        )
       : [];
+  const selectedVehicle = mockVehicles.find(
+    (vehicle) => vehicle.vin === searchedVin,
+  );
   const pageCount = Math.max(
     1,
     Math.ceil(suggestions.length / vehiclesPerPage),
@@ -146,7 +80,8 @@ export default function Home() {
     setShowVehicleResults(true);
   }
 
-  async function selectVehicle(normalizedVin: string) {
+  async function selectVehicle(vehicle: Vehicle) {
+    const normalizedVin = vehicle.vin;
     setPreviousVehicleQuery(vin.trim());
     setVin(normalizedVin);
     setShowVehicleResults(false);
@@ -156,8 +91,8 @@ export default function Home() {
     setLoading(true);
     setSearchedVin(normalizedVin);
     const results = await Promise.allSettled([
-      fetchSalesDocuments(normalizedVin),
-      fetchServiceDocuments(normalizedVin),
+      fetchSalesDocuments(vehicle),
+      fetchServiceDocuments(vehicle),
     ]);
     const next: VehicleDocument[] = [];
     const failures: string[] = [];
@@ -313,13 +248,12 @@ export default function Home() {
                 </div>
               </div>
               <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {visibleSuggestions.map((suggestion, index) => (
-                  <li key={suggestion} className="w-full min-w-0">
+                {visibleSuggestions.map((suggestion) => (
+                  <li key={suggestion.vin} className="w-full min-w-0">
                     <VehicleCard
-                      vin={suggestion}
-                      index={firstVehicleIndex + index}
-                      onSelect={(selectedVin) =>
-                        void selectVehicle(selectedVin)
+                      vehicle={suggestion}
+                      onSelect={(selectedVehicle) =>
+                        void selectVehicle(selectedVehicle)
                       }
                     />
                   </li>
@@ -355,16 +289,21 @@ export default function Home() {
             <div className="flex min-w-0 items-center ">
               <div className="flex h-24 w-36 shrink-0 items-center justify-center rounded-xl p-2">
                 <img
-                  src={getVehicleImage(searchedVin)}
+                  src={
+                    selectedVehicle?.image ?? '/images/cars/car-1.png'
+                  }
                   alt=""
                   className="size-full object-contain"
                 />
               </div>
               <div className="min-w-0">
                 <p className="text-sm text-slate-500">Documents for</p>
-                <h2 className="break-all font-mono text-lg font-semibold">
-                  {searchedVin}
+                <h2 className="text-lg font-semibold">
+                  {selectedVehicle?.vehicle_name ?? 'Vehicle'}
                 </h2>
+                <p className="break-all font-mono text-sm text-slate-600">
+                  {searchedVin}
+                </p>
               </div>
             </div>
             <div className="flex items-center justify-between gap-4 sm:justify-end">
