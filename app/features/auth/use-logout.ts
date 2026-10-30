@@ -34,9 +34,7 @@ export function useLogout() {
     }
     const { persisted } = useAuthStore.getState().signOut();
     enqueueSnackbar(
-      persisted
-        ? t('account.loggedOut')
-        : t('account.loggedOutStorageWarning'),
+      persisted ? t('account.loggedOut') : t('account.loggedOutStorageWarning'),
       {
         variant: persisted ? 'success' : 'warning',
         autoHideDuration: persisted ? 4000 : 6000,
@@ -45,13 +43,10 @@ export function useLogout() {
     try {
       await navigate('/login', { replace: true });
     } catch {
-      enqueueSnackbar(
-        t('account.loginNavigationError'),
-        {
-          variant: 'error',
-          autoHideDuration: 6000,
-        },
-      );
+      enqueueSnackbar(t('account.loginNavigationError'), {
+        variant: 'error',
+        autoHideDuration: 6000,
+      });
     } finally {
       locked.current = false;
       setPending(false);

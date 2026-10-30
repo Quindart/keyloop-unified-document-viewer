@@ -24,7 +24,10 @@ export async function action({ request }: ActionFunctionArgs) {
     return Response.json({ ok: true });
   try {
     const setCookie = await destroyGoogleSession(request);
-    return Response.json({ ok: true }, { headers: { 'Set-Cookie': setCookie } });
+    return Response.json(
+      { ok: true },
+      { headers: { 'Set-Cookie': setCookie } },
+    );
   } catch {
     return Response.json({ ok: false }, { status: 500 });
   }

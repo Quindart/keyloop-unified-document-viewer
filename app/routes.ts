@@ -10,7 +10,5 @@ export default [
   route('auth/google', 'routes/auth.google.tsx'),
   route('auth/google/callback', 'routes/auth.google.callback.tsx'),
   route('auth/session', 'routes/auth.session.tsx'),
-  layout('routes/workspace.tsx', [
-    route('home', 'routes/home.tsx'),
-  ]),
+  layout('routes/workspace.tsx', [route('home', 'routes/home.tsx')]),
 ] satisfies RouteConfig;

@@ -28,7 +28,7 @@ export function useLogin() {
 
   useEffect(() => {
     const subscription = form.watch(() => {
-      setErrorKey((key) => key === 'login.invalidCredentials' ? '' : key);
+      setErrorKey((key) => (key === 'login.invalidCredentials' ? '' : key));
     });
     return () => subscription.unsubscribe();
   }, [form]);
@@ -109,10 +109,16 @@ export function useLogin() {
     () => {
       const values = form.getValues();
       if (!values.username.trim()) {
-        form.setError('username', { type: 'required', message: t('login.usernameRequired') });
+        form.setError('username', {
+          type: 'required',
+          message: t('login.usernameRequired'),
+        });
       }
       if (!values.password) {
-        form.setError('password', { type: 'required', message: t('login.passwordRequired') });
+        form.setError('password', {
+          type: 'required',
+          message: t('login.passwordRequired'),
+        });
       }
       showError('login.invalidForm');
     },
