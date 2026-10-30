@@ -165,8 +165,8 @@ export default function Home() {
       {loading && <p role="status" className="text-sm text-slate-500">Loading documents from Sales and Service…</p>}
       {searchedVin && !loading && !error && <div className="mt-10 w-full">
         <div className="mb-6 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 items-center gap-4">
-            <div className="flex h-24 w-36 shrink-0 items-center justify-center rounded-xl border bg-slate-50 p-2">
+          <div className="flex min-w-0 items-center ">
+            <div className="flex h-24 w-36 shrink-0 items-center justify-center rounded-xl p-2">
               <img src={getVehicleImage(searchedVin)} alt="" className="size-full object-contain" />
             </div>
             <div className="min-w-0">
