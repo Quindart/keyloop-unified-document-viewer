@@ -50,11 +50,11 @@ export function LanguageSelect() {
           className="w-[170px] gap-2 bg-background text-foreground"
         >
           <span className="flex min-w-0 items-center gap-2">
-            <img
+            {/* <img
               src={currentOption.flag}
               alt=""
               className="size-5 shrink-0 rounded-full object-cover"
-            />
+            /> */}
             <SelectValue />
           </span>
         </SelectTrigger>
