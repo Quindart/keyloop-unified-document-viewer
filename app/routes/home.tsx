@@ -1,8 +1,16 @@
 import { useState, type FormEvent } from 'react';
-import { ArrowLeft, Search, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Search, AlertCircle, CarFront } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
+import { Skeleton } from '~/components/ui/skeleton';
+import { AnimatePresence } from 'motion/react';
+import {
+  DocumentGridSkeleton,
+  VehicleGridSkeleton,
+  VehicleInformationSkeleton,
+} from '~/components/atoms/vehicle-skeletons';
+import { AnimatedListItem } from '~/components/atoms/animated-list-item';
 import { VehicleCard } from '~/features/vehicles/vehicle-card';
 import { DocumentCard } from '~/features/vehicles/document-card';
 import { DocumentPreviewSheet } from '~/features/vehicles/document-preview-sheet';
@@ -37,6 +45,7 @@ export default function Home() {
   const [selectedDocument, setSelectedDocument] =
     useState<VehicleDocument | null>(null);
   const [loading, setLoading] = useState(false);
+  const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
   const [sourceErrors, setSourceErrors] = useState<string[]>([]);
   const [showVehicleResults, setShowVehicleResults] = useState(false);
@@ -60,13 +69,14 @@ export default function Home() {
     firstVehicleIndex,
     firstVehicleIndex + vehiclesPerPage,
   );
-  const isDocumentView = Boolean(searchedVin && !loading && !error);
+  const isDocumentView = Boolean(searchedVin && !error);
 
   async function search(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setCurrentVehiclePage(1);
     const normalizedVin = vin.trim().toUpperCase();
     if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(normalizedVin)) {
+      setSearching(false);
       setError('Enter a valid 17-character VIN.');
       setDocuments([]);
       setSearchedVin('');
@@ -77,6 +87,10 @@ export default function Home() {
     setDocuments([]);
     setSelectedDocument(null);
     setSearchedVin('');
+    setShowVehicleResults(false);
+    setSearching(true);
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    setSearching(false);
     setShowVehicleResults(true);
   }
 
@@ -143,10 +157,11 @@ export default function Home() {
             <Input
               id="vin"
               value={vin}
-              disabled={loading}
+              disabled={loading || searching}
               onChange={(event) => {
                 setVin(event.target.value.toUpperCase());
                 setCurrentVehiclePage(1);
+                setSearching(false);
                 setShowVehicleResults(true);
                 setSearchedVin('');
                 setDocuments([]);
@@ -159,13 +174,18 @@ export default function Home() {
               className="h-11 w-full font-mono uppercase"
             />
           </div>
-          <Button type="submit" disabled={loading} className="h-11 gap-2">
+          <Button
+            type="submit"
+            disabled={loading || searching}
+            className="h-11 gap-2"
+          >
             <Search className="size-4" />
-            {loading ? 'Searching…' : 'Search'}
+            {searching ? 'Searching…' : 'Search'}
           </Button>
         </form>
       )}
-      {showVehicleResults && vin.trim().length > 0 && (
+      {searching && <VehicleGridSkeleton />}
+      {!searching && showVehicleResults && vin.trim().length > 0 && (
         <div className="mt-2 space-y-4">
           <h2 className="text-lg font-semibold text-slate-900">
             Matching vehicles{' '}
@@ -174,9 +194,15 @@ export default function Home() {
             </span>
           </h2>
           {suggestions.length === 0 ? (
-            <p className="rounded-xl border border-dashed p-8 text-center text-sm text-slate-500">
-              No vehicles match this VIN. Try another search.
-            </p>
+            <div className="rounded-xl border border-dashed p-8 text-center">
+              <CarFront
+                aria-hidden="true"
+                className="mx-auto mb-3 size-8 text-slate-400"
+              />
+              <p className="text-sm text-slate-500">
+                No vehicles match this VIN. Try another search.
+              </p>
+            </div>
           ) : (
             <>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -248,16 +274,22 @@ export default function Home() {
                 </div>
               </div>
               <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {visibleSuggestions.map((suggestion) => (
-                  <li key={suggestion.vin} className="w-full min-w-0">
-                    <VehicleCard
-                      vehicle={suggestion}
-                      onSelect={(selectedVehicle) =>
-                        void selectVehicle(selectedVehicle)
-                      }
-                    />
-                  </li>
-                ))}
+                <AnimatePresence>
+                  {visibleSuggestions.map((suggestion, index) => (
+                    <AnimatedListItem
+                      key={suggestion.vin}
+                      index={index}
+                      className="w-full min-w-0"
+                    >
+                      <VehicleCard
+                        vehicle={suggestion}
+                        onSelect={(selectedVehicle) =>
+                          void selectVehicle(selectedVehicle)
+                        }
+                      />
+                    </AnimatedListItem>
+                  ))}
+                </AnimatePresence>
               </ul>
             </>
           )}
@@ -278,10 +310,24 @@ export default function Home() {
           documents.
         </p>
       )}
-      {loading && (
-        <p role="status" className="text-sm text-slate-500">
-          Loading documents from Sales and Service…
-        </p>
+      {loading && searchedVin && (
+        <div
+          role="status"
+          aria-label="Loading vehicle documents"
+          className="mt-10 w-full"
+        >
+          <span className="sr-only">
+            Loading vehicle and document information…
+          </span>
+          <div className="mb-6 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
+            <VehicleInformationSkeleton />
+            <div aria-hidden="true" className="flex items-center gap-4">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-9 w-24 rounded-md" />
+            </div>
+          </div>
+          <DocumentGridSkeleton />
+        </div>
       )}
       {searchedVin && !loading && !error && (
         <div className="mt-10 w-full">
@@ -289,9 +335,7 @@ export default function Home() {
             <div className="flex min-w-0 items-center ">
               <div className="flex h-24 w-36 shrink-0 items-center justify-center rounded-xl p-2">
                 <img
-                  src={
-                    selectedVehicle?.image ?? '/images/cars/car-1.png'
-                  }
+                  src={selectedVehicle?.image ?? '/images/cars/car-1.png'}
                   alt=""
                   className="size-full object-contain"
                 />
@@ -327,20 +371,23 @@ export default function Home() {
             </p>
           ) : (
             <ol className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 [&>*]:min-w-0">
-              {documents.map((document) => (
-                <DocumentCard
-                  key={document.id}
-                  document={document}
-                  onSelect={setSelectedDocument}
-                />
-              ))}
+              <AnimatePresence>
+                {documents.map((document, index) => (
+                  <DocumentCard
+                    key={document.id}
+                    document={document}
+                    index={index}
+                    onSelect={setSelectedDocument}
+                  />
+                ))}
+              </AnimatePresence>
             </ol>
           )}
         </div>
       )}
-      {!searchedVin && !error && !showVehicleResults && (
+      {!searchedVin && !error && !showVehicleResults && !searching && (
         <div className="rounded-xl border border-dashed bg-slate-50/60 px-6 py-14 text-center">
-          <Search className="mx-auto size-8 text-slate-400" />
+          <CarFront className="mx-auto size-8 text-slate-400" />
           <p className="mt-3 font-medium text-slate-700">
             Start with a VIN search
           </p>
