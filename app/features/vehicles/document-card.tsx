@@ -31,10 +31,15 @@ export function DocumentCard({ document }: DocumentCardProps) {
         </div>
       </div>
       <div className="flex items-center justify-between gap-2">
-        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${document.source === 'Sales' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'}`}>
+        <span
+          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${document.source === 'Sales' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'}`}
+        >
           {document.source}
         </span>
-        <time dateTime={document.date} className="flex shrink-0 items-center gap-1.5 text-xs text-slate-500 sm:text-sm">
+        <time
+          dateTime={document.date}
+          className="flex shrink-0 items-center gap-1.5 text-xs text-slate-500 sm:text-sm"
+        >
           <Clock3 className="size-4" />
           {new Date(document.date).toLocaleDateString()}
         </time>

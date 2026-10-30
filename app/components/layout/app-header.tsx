@@ -41,14 +41,19 @@ export function AppHeader() {
       typeof handle.breadcrumbKey !== 'string'
     )
       return [];
-    return [{ id: match.id, href: match.pathname, label: t(handle.breadcrumbKey) }];
+    return [
+      { id: match.id, href: match.pathname, label: t(handle.breadcrumbKey) },
+    ];
   });
 
   return (
     <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 border-b bg-background px-4 md:px-6">
       <SidebarTrigger aria-label={t('navigation.toggle')} />
       <Separator orientation="vertical" className="!h-4" />
-      <Breadcrumb aria-label={t('navigation.currentPath')} className="min-w-0 flex-1">
+      <Breadcrumb
+        aria-label={t('navigation.currentPath')}
+        className="min-w-0 flex-1"
+      >
         <BreadcrumbList>
           {breadcrumbs.map((crumb, index) => (
             <Fragment key={crumb.id}>
@@ -70,7 +75,12 @@ export function AppHeader() {
       </Breadcrumb>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="shrink-0 gap-2" aria-label={t('language.label')}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0 gap-2"
+            aria-label={t('language.label')}
+          >
             <Languages aria-hidden="true" className="size-4" />
             <span>{translation.resolvedLanguage === 'en' ? 'EN' : 'VI'}</span>
           </Button>
@@ -85,7 +95,9 @@ export function AppHeader() {
                 window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
                 void i18n.changeLanguage(language);
               }}
-              aria-current={translation.resolvedLanguage === language ? 'true' : undefined}
+              aria-current={
+                translation.resolvedLanguage === language ? 'true' : undefined
+              }
               className="cursor-pointer"
             >
               {t(`language.${language === 'vi' ? 'vietnamese' : 'english'}`)}
@@ -116,7 +128,11 @@ export function AppHeader() {
             {user?.kind === 'google' ? (
               <>
                 <p className="truncate">{user.name || user.email}</p>
-                {user.name && <p className="truncate text-xs font-normal text-muted-foreground">{user.email}</p>}
+                {user.name && (
+                  <p className="truncate text-xs font-normal text-muted-foreground">
+                    {user.email}
+                  </p>
+                )}
               </>
             ) : (
               <p className="truncate">{user?.username}</p>

@@ -26,7 +26,11 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <NavLink to="/home" onClick={() => setOpenMobile(false)}>
-                <img src="/keyloop-logo.svg" alt="Keyloop" className="h-auto w-28 text-sidebar-foreground group-data-[collapsible=icon]:hidden" />
+                <img
+                  src="/keyloop-logo.svg"
+                  alt="Keyloop"
+                  className="h-auto w-28 text-sidebar-foreground group-data-[collapsible=icon]:hidden"
+                />
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -39,11 +43,7 @@ export function AppSidebar() {
             <nav aria-label={t('navigation.primary')}>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive
-                    tooltip={t('home.label')}
-                  >
+                  <SidebarMenuButton asChild isActive tooltip={t('home.label')}>
                     <NavLink
                       to="/home"
                       end

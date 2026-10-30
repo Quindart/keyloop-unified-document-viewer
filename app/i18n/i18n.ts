@@ -6,7 +6,9 @@ export const LANGUAGE_STORAGE_KEY = 'workspace_language';
 
 export function getSavedLanguage(): AppLanguage {
   if (typeof window === 'undefined') return 'vi';
-  return window.localStorage.getItem(LANGUAGE_STORAGE_KEY) === 'en' ? 'en' : 'vi';
+  return window.localStorage.getItem(LANGUAGE_STORAGE_KEY) === 'en'
+    ? 'en'
+    : 'vi';
 }
 
 if (!i18n.isInitialized) {

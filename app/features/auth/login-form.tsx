@@ -3,11 +3,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Languages } from 'lucide-react';
 import { Link, Navigate, useSearchParams } from 'react-router';
-import {
-  Eye,
-  EyeOff,
-  LoaderCircle,
-} from 'lucide-react';
+import { Eye, EyeOff, LoaderCircle } from 'lucide-react';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
@@ -49,9 +45,9 @@ export function LoginForm({ title }: { title: string }) {
         />
         <div className="relative z-10 max-w-xl text-white">
           <div className="relative z-10 flex items-center justify-between gap-4">
-          <p className="login-copy login-copy-delay-1 text-xs font-semibold uppercase tracking-[0.22em] text-white/75">
+            <p className="login-copy login-copy-delay-1 text-xs font-semibold uppercase tracking-[0.22em] text-white/75">
               Keyloop workspace
-          </p>
+            </p>
           </div>
           <h2 className="login-copy login-copy-delay-2 mt-4 text-3xl font-semibold leading-tight tracking-tight lg:text-4xl">
             {t('login.brandHeading')}
@@ -72,7 +68,11 @@ export function LoginForm({ title }: { title: string }) {
       <section className="login-panel relative z-20 flex min-h-svh items-center justify-center px-6 py-12 sm:px-12">
         <div className="w-full max-w-md">
           <div className="mb-10 md:hidden">
-            <img src="/keyloop-logo.svg" alt="Keyloop" className="h-auto w-32" />
+            <img
+              src="/keyloop-logo.svg"
+              alt="Keyloop"
+              className="h-auto w-32"
+            />
           </div>
           <form
             noValidate
@@ -130,7 +130,11 @@ export function LoginForm({ title }: { title: string }) {
                   variant="ghost"
                   size="icon"
                   className="absolute right-1 top-2 h-10 w-10"
-                  aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
+                  aria-label={
+                    showPassword
+                      ? t('login.hidePassword')
+                      : t('login.showPassword')
+                  }
                   aria-pressed={showPassword}
                   disabled={busy}
                   onClick={() => setShowPassword((value) => !value)}
@@ -166,7 +170,11 @@ export function LoginForm({ title }: { title: string }) {
                 {t('login.retryHome')}
               </Button>
             ) : (
-              <Button type="submit" disabled={busy} className="h-14 w-full rounded-xl text-base">
+              <Button
+                type="submit"
+                disabled={busy}
+                className="h-14 w-full rounded-xl text-base"
+              >
                 {busy ? (
                   <LoaderCircle
                     aria-hidden="true"
@@ -197,11 +205,28 @@ export function LoginForm({ title }: { title: string }) {
                   if (busy) event.preventDefault();
                 }}
               >
-                <svg aria-hidden="true" className="size-7" viewBox="0 0 48 48" focusable="false">
-                  <path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.9 6.1-15Z" />
-                  <path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.9l-6.6-5.1c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z" />
-                  <path fill="#FBBC05" d="M12.6 27.6a12 12 0 0 1 0-7.2v-5.3H5.8a20 20 0 0 0 0 17.8l6.8-5.3Z" />
-                  <path fill="#EA4335" d="M24 12c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 6 29.5 4 24 4A20 20 0 0 0 5.8 15.1l6.8 5.3C14.2 15.6 18.7 12 24 12Z" />
+                <svg
+                  aria-hidden="true"
+                  className="size-7"
+                  viewBox="0 0 48 48"
+                  focusable="false"
+                >
+                  <path
+                    fill="#4285F4"
+                    d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.9 6.1-15Z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M24 44c5.5 0 10.1-1.8 13.5-4.9l-6.6-5.1c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M12.6 27.6a12 12 0 0 1 0-7.2v-5.3H5.8a20 20 0 0 0 0 17.8l6.8-5.3Z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M24 12c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 6 29.5 4 24 4A20 20 0 0 0 5.8 15.1l6.8 5.3C14.2 15.6 18.7 12 24 12Z"
+                  />
                 </svg>
                 {t('login.continueGoogle')}
               </Link>
@@ -224,7 +249,9 @@ function LanguagePicker() {
   return (
     <div className="flex shrink-0 items-center gap-2">
       <Languages aria-hidden="true" className="size-4" />
-      <label htmlFor="login-language" className="sr-only">{t('language.label')}</label>
+      <label htmlFor="login-language" className="sr-only">
+        {t('language.label')}
+      </label>
       <select
         id="login-language"
         value={translation.resolvedLanguage === 'en' ? 'en' : 'vi'}
@@ -235,8 +262,12 @@ function LanguagePicker() {
         }}
         className="rounded-md border border-current/20 bg-transparent px-2 py-1 text-sm text-inherit"
       >
-        <option value="vi" className="text-foreground">{t('language.vietnamese')}</option>
-        <option value="en" className="text-foreground">{t('language.english')}</option>
+        <option value="vi" className="text-foreground">
+          {t('language.vietnamese')}
+        </option>
+        <option value="en" className="text-foreground">
+          {t('language.english')}
+        </option>
       </select>
     </div>
   );
