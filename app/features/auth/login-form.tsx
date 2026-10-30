@@ -1,9 +1,9 @@
 // Adapted from official shadcn login-04: https://ui.shadcn.com/blocks/login
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Languages } from 'lucide-react';
 import { Link, Navigate, useSearchParams } from 'react-router';
 import { Eye, EyeOff, LoaderCircle } from 'lucide-react';
+import { LanguageSelect } from '~/components/atoms/language-select';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
@@ -11,8 +11,6 @@ import { useLogin } from './use-login';
 import { useAuthStore } from './auth-store';
 import { SessionPending } from './auth-gate';
 import { LoginProgress } from './login-progress';
-import i18n, { LANGUAGE_STORAGE_KEY } from '~/i18n/i18n';
-import type { AppLanguage } from '~/i18n/resources';
 
 export function LoginForm({ title }: { title: string }) {
   const { t, i18n: translation } = useTranslation();
@@ -235,40 +233,11 @@ export function LoginForm({ title }: { title: string }) {
               {t('login.encouragement')}
             </p>
             <div className="flex justify-center">
-              <LanguagePicker />
+              <LanguageSelect />
             </div>
           </form>
         </div>
       </section>
     </main>
-  );
-}
-
-function LanguagePicker() {
-  const { t, i18n: translation } = useTranslation();
-  return (
-    <div className="flex shrink-0 items-center gap-2">
-      <Languages aria-hidden="true" className="size-4" />
-      <label htmlFor="login-language" className="sr-only">
-        {t('language.label')}
-      </label>
-      <select
-        id="login-language"
-        value={translation.resolvedLanguage === 'en' ? 'en' : 'vi'}
-        onChange={(event) => {
-          const language = event.target.value as AppLanguage;
-          window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
-          void i18n.changeLanguage(language);
-        }}
-        className="rounded-md border border-current/20 bg-transparent px-2 py-1 text-sm text-inherit"
-      >
-        <option value="vi" className="text-foreground">
-          {t('language.vietnamese')}
-        </option>
-        <option value="en" className="text-foreground">
-          {t('language.english')}
-        </option>
-      </select>
-    </div>
   );
 }
