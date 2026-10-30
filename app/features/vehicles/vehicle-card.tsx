@@ -10,7 +10,7 @@ export function VehicleCard({ vehicle, onSelect }: VehicleCardProps) {
     <button
       type="button"
       onClick={() => onSelect(vehicle)}
-      className="group flex w-full min-h-40 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      className="group flex w-full min-h-40 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 text-left shadow-sm transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
     >
       <span className="flex h-36 w-full shrink-0 items-center justify-center bg-slate-50 px-4 py-3">
         <img

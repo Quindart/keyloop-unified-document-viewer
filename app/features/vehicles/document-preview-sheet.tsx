@@ -7,7 +7,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from '~/components/ui/sheet';
+import { Button } from '~/components/ui/button';
 import type { VehicleDocument } from '~/features/vehicles/vehicle-types';
+import { Download } from 'lucide-react';
 
 type DocumentPreviewSheetProps = {
   document: VehicleDocument | null;
@@ -344,11 +346,21 @@ export function DocumentPreviewSheet({
       >
         {document && sample && (
           <>
-            <SheetHeader className="shrink-0 border-b px-6 py-5 pr-14">
-              <SheetTitle className="break-words">{document.name}</SheetTitle>
-              <SheetDescription>
-                Previewing {fileName}.
-              </SheetDescription>
+            <SheetHeader className="shrink-0 border-b px-6 py-5 pr-14 text-left">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 space-y-2">
+                  <SheetTitle className="break-words">
+                    {document.name}
+                  </SheetTitle>
+                  <SheetDescription>Previewing {fileName}.</SheetDescription>
+                </div>
+                <Button asChild variant="outline" className="shrink-0">
+                  <a href={document.file_url} download={fileName}>
+                    <Download aria-hidden="true" />
+                    Download document
+                  </a>
+                </Button>
+              </div>
             </SheetHeader>
             <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_auto] overflow-hidden lg:grid-cols-[minmax(0,1fr)_17rem] lg:grid-rows-1">
               <main className="min-h-0 overflow-hidden bg-slate-100 p-4 sm:p-6">

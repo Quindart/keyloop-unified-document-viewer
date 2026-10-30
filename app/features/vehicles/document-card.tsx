@@ -1,19 +1,21 @@
 import { Clock3 } from 'lucide-react';
+import { AnimatedListItem } from '~/components/atoms/animated-list-item';
 import type { VehicleDocument } from './vehicle-types';
 
 type DocumentCardProps = {
   document: VehicleDocument;
+  index: number;
   onSelect: (document: VehicleDocument) => void;
 };
 
-export function DocumentCard({ document, onSelect }: DocumentCardProps) {
+export function DocumentCard({ document, index, onSelect }: DocumentCardProps) {
   return (
-    <li className="w-full min-w-0">
+    <AnimatedListItem index={index} className="w-full min-w-0">
       <button
         type="button"
         aria-haspopup="dialog"
         onClick={() => onSelect(document)}
-        className="flex min-h-36 w-full flex-col justify-between gap-5 rounded-xl border bg-white p-4 text-left shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 sm:p-5"
+        className="flex min-h-36 w-full flex-col justify-between gap-5 rounded-xl border bg-white p-4 text-left shadow-sm transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 sm:p-5"
       >
         <span className="flex items-start gap-3">
           <img
@@ -52,6 +54,6 @@ export function DocumentCard({ document, onSelect }: DocumentCardProps) {
           </time>
         </span>
       </button>
-    </li>
+    </AnimatedListItem>
   );
 }
