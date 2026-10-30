@@ -13,6 +13,7 @@ import { AppProviders } from '~/providers/app-providers';
 import { useTranslation } from 'react-i18next';
 
 export const links: Route.LinksFunction = () => [
+  { rel: 'icon', type: 'image/svg+xml', href: '/keyloop-logo.svg' },
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
     rel: 'preconnect',
@@ -53,16 +54,15 @@ export default function App() {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = 'Không thể mở trang';
-  let details = 'Vui lòng thử mở lại trang chủ.';
+  const { t } = useTranslation();
+  let message = t('errors.pageUnavailable');
+  let details = t('errors.retryHome');
   let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? '404' : 'Error';
+    message = error.status === 404 ? '404' : t('errors.generic');
     details =
-      error.status === 404
-        ? 'Không tìm thấy trang yêu cầu.'
-        : error.statusText || details;
+      error.status === 404 ? t('errors.notFound') : t('errors.requestFailed');
   } else if (import.meta.env.DEV && error && error instanceof Error) {
     details = error.message;
     stack = error.stack;
@@ -76,7 +76,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
         href="/home"
         className="mt-4 inline-block rounded border p-3 underline"
       >
-        Thử mở trang chủ lại
+        {t('errors.retryHome')}
       </a>
       {stack && (
         <pre className="w-full p-4 overflow-x-auto">

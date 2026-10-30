@@ -19,13 +19,17 @@ export function AppSidebar() {
   const { setOpenMobile } = useSidebar();
   const { t } = useTranslation();
 
+  function handleCloseMobileNavigation() {
+    setOpenMobile(false);
+  }
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="h-16 justify-center border-b">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <NavLink to="/home" onClick={() => setOpenMobile(false)}>
+              <NavLink to="/home" onClick={handleCloseMobileNavigation}>
                 <img
                   src="/keyloop-logo.svg"
                   alt="Keyloop"
@@ -47,7 +51,7 @@ export function AppSidebar() {
                     <NavLink
                       to="/home"
                       end
-                      onClick={() => setOpenMobile(false)}
+                      onClick={handleCloseMobileNavigation}
                     >
                       <Home aria-hidden="true" />
                       <span>{t('home.label')}</span>

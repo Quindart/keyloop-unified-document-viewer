@@ -32,19 +32,18 @@ export function LanguageSelect() {
     (option) => option.language === currentLanguage,
   )!;
 
+  function handleLanguageChange(value: string) {
+    const language = value as AppLanguage;
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+    void i18n.changeLanguage(language);
+  }
+
   return (
     <div className="flex shrink-0 items-center">
       <label htmlFor="language-select" className="sr-only">
         {t('language.label')}
       </label>
-      <Select
-        value={currentLanguage}
-        onValueChange={(value) => {
-          const language = value as AppLanguage;
-          window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
-          void i18n.changeLanguage(language);
-        }}
-      >
+      <Select value={currentLanguage} onValueChange={handleLanguageChange}>
         <SelectTrigger
           id="language-select"
           className="w-[170px] gap-2 bg-background text-foreground"

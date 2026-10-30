@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react';
 import { Navigate } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from './auth-store';
 
 export function SessionPending() {
+  const { t } = useTranslation();
   return (
     <main className="flex min-h-svh items-center justify-center p-6">
-      <p role="status">Đang khôi phục phiên…</p>
+      <p role="status">{t('account.restoringSession')}</p>
     </main>
   );
 }

@@ -1,4 +1,5 @@
 import type { Vehicle } from './vehicle-types';
+import { useTranslation } from 'react-i18next';
 
 type VehicleCardProps = {
   vehicle: Vehicle;
@@ -6,10 +7,16 @@ type VehicleCardProps = {
 };
 
 export function VehicleCard({ vehicle, onSelect }: VehicleCardProps) {
+  const { t } = useTranslation();
+
+  function handleClick() {
+    onSelect(vehicle);
+  }
+
   return (
     <button
       type="button"
-      onClick={() => onSelect(vehicle)}
+      onClick={handleClick}
       className="group flex w-full min-h-40 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 text-left shadow-sm transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
     >
       <span className="flex h-36 w-full shrink-0 items-center justify-center bg-slate-50 px-4 py-3">
@@ -32,7 +39,7 @@ export function VehicleCard({ vehicle, onSelect }: VehicleCardProps) {
         </span>
 
         <span className="mt-auto flex w-full items-center justify-between border-t border-slate-100 pt-4 text-sm font-semibold text-blue-700 group-hover:text-blue-800">
-          <span>View documents</span>
+          <span>{t('documents.view')}</span>
           <span
             aria-hidden="true"
             className="text-lg transition-transform group-hover:translate-x-1"

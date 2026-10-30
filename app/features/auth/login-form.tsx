@@ -1,5 +1,5 @@
 // Adapted from official shadcn login-04: https://ui.shadcn.com/blocks/login
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Navigate, useSearchParams } from 'react-router';
 import { Eye, EyeOff, LoaderCircle } from 'lucide-react';
@@ -23,6 +23,15 @@ export function LoginForm({ title }: { title: string }) {
   const busy = phase !== 'idle';
   const googleError = searchParams.get('auth_error') === 'google';
   const { errors } = form.formState;
+
+  function handleTogglePasswordVisibility() {
+    setShowPassword((value) => !value);
+  }
+
+  function handleGoogleSignInClick(event: MouseEvent<HTMLAnchorElement>) {
+    if (busy) event.preventDefault();
+  }
+
   useEffect(() => {
     document.title = title;
   }, [title]);
@@ -44,7 +53,7 @@ export function LoginForm({ title }: { title: string }) {
         <div className="relative z-10 max-w-xl text-white">
           <div className="relative z-10 flex items-center justify-between gap-4">
             <p className="login-copy login-copy-delay-1 text-xs font-semibold uppercase tracking-[0.22em] text-white/75">
-              Keyloop workspace
+              {t('login.brandLabel')}
             </p>
           </div>
           <h2 className="login-copy login-copy-delay-2 mt-4 text-3xl font-semibold leading-tight tracking-tight lg:text-4xl">
@@ -63,7 +72,13 @@ export function LoginForm({ title }: { title: string }) {
       >
         <path d="M 51 0 C 58 27, 59 72, 50 100" />
       </svg>
-      <section className="login-panel relative z-20 flex min-h-svh items-center justify-center px-6 py-12 sm:px-12">
+      <section className="login-panel relative z-20 flex min-h-svh items-center justify-center px-6 pb-12 pt-24 sm:px-12">
+        <nav
+          aria-label={t('language.label')}
+          className="absolute right-6 top-6 z-30 sm:right-12"
+        >
+          <LanguageSelect />
+        </nav>
         <div className="w-full max-w-md">
           <div className="mb-10 md:hidden">
             <img
@@ -135,7 +150,7 @@ export function LoginForm({ title }: { title: string }) {
                   }
                   aria-pressed={showPassword}
                   disabled={busy}
-                  onClick={() => setShowPassword((value) => !value)}
+                  onClick={handleTogglePasswordVisibility}
                 >
                   {showPassword ? (
                     <EyeOff aria-hidden="true" />
@@ -199,9 +214,7 @@ export function LoginForm({ title }: { title: string }) {
                 to="/auth/google"
                 aria-label={t('login.continueGoogle')}
                 tabIndex={busy ? -1 : undefined}
-                onClick={(event) => {
-                  if (busy) event.preventDefault();
-                }}
+                onClick={handleGoogleSignInClick}
               >
                 <svg
                   aria-hidden="true"
@@ -232,9 +245,6 @@ export function LoginForm({ title }: { title: string }) {
             <p className="text-center text-sm leading-6 text-muted-foreground">
               {t('login.encouragement')}
             </p>
-            <div className="flex justify-center">
-              <LanguageSelect />
-            </div>
           </form>
         </div>
       </section>

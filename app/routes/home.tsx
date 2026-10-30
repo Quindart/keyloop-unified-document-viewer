@@ -1,6 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { ArrowLeft, Search, AlertCircle, CarFront } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import i18n from '~/i18n/i18n';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Skeleton } from '~/components/ui/skeleton';
@@ -32,12 +33,15 @@ async function fetchServiceDocuments(vehicle: Vehicle) {
 }
 
 export function meta() {
-  return [{ title: 'Unified Document Viewer' }];
+  return [{ title: i18n.t('home.title') }];
 }
 export const handle = { breadcrumbKey: 'home.label' };
 
 export default function Home() {
   const { t } = useTranslation();
+  useEffect(() => {
+    document.title = t('home.title');
+  }, [t]);
   const [vin, setVin] = useState('');
   const [previousVehicleQuery, setPreviousVehicleQuery] = useState('');
   const [searchedVin, setSearchedVin] = useState('');
@@ -71,13 +75,37 @@ export default function Home() {
   );
   const isDocumentView = Boolean(searchedVin && !error);
 
-  async function search(event: FormEvent<HTMLFormElement>) {
+  function handleVinChange(event: ChangeEvent<HTMLInputElement>) {
+    setVin(event.target.value.toUpperCase());
+    setCurrentVehiclePage(1);
+    setSearching(false);
+    setShowVehicleResults(true);
+    setSearchedVin('');
+    setDocuments([]);
+    setSelectedDocument(null);
+    setError('');
+  }
+
+  function handleVehiclePageSizeChange(event: ChangeEvent<HTMLSelectElement>) {
+    setVehiclesPerPage(Number(event.target.value));
+    setCurrentVehiclePage(1);
+  }
+
+  function handlePreviousVehiclePage() {
+    setCurrentVehiclePage((page) => Math.max(1, page - 1));
+  }
+
+  function handleNextVehiclePage() {
+    setCurrentVehiclePage((page) => Math.min(pageCount, page + 1));
+  }
+
+  async function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setCurrentVehiclePage(1);
     const normalizedVin = vin.trim().toUpperCase();
     if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(normalizedVin)) {
       setSearching(false);
-      setError('Enter a valid 17-character VIN.');
+      setError('home.invalidVin');
       setDocuments([]);
       setSearchedVin('');
       return;
@@ -94,7 +122,7 @@ export default function Home() {
     setShowVehicleResults(true);
   }
 
-  async function selectVehicle(vehicle: Vehicle) {
+  async function handleSelectVehicle(vehicle: Vehicle) {
     const normalizedVin = vehicle.vin;
     setPreviousVehicleQuery(vin.trim());
     setVin(normalizedVin);
@@ -118,11 +146,10 @@ export default function Home() {
     setDocuments(next);
     setSourceErrors(failures);
     setLoading(false);
-    if (failures.length === 2)
-      setError('Both systems are unavailable. Please try again.');
+    if (failures.length === 2) setError('home.systemsUnavailable');
   }
 
-  function goBackToVehicleResults() {
+  function handleBackToVehicleResults() {
     setVin(previousVehicleQuery);
     setShowVehicleResults(true);
     setSearchedVin('');
@@ -132,6 +159,10 @@ export default function Home() {
     setError('');
   }
 
+  function handleCloseDocumentPreview() {
+    setSelectedDocument(null);
+  }
+
   return (
     <section
       aria-label={t('home.label')}
@@ -139,36 +170,25 @@ export default function Home() {
     >
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight text-slate-950">
-          Unified Document Viewer
+          {t('home.title')}
         </h1>
-        <p className="max-w-2xl text-slate-600">
-          Search a vehicle to see its sales and service documents together.
-        </p>
+        <p className="max-w-2xl text-slate-600">{t('home.description')}</p>
       </header>
       {!isDocumentView && (
         <form
-          onSubmit={search}
+          onSubmit={handleSearch}
           className="flex flex-col gap-3 rounded-xl border bg-white p-4 shadow-sm sm:flex-row sm:p-5"
         >
           <label className="sr-only" htmlFor="vin">
-            Vehicle Identification Number
+            {t('home.vinLabel')}
           </label>
           <div className="relative flex-1">
             <Input
               id="vin"
               value={vin}
               disabled={loading || searching}
-              onChange={(event) => {
-                setVin(event.target.value.toUpperCase());
-                setCurrentVehiclePage(1);
-                setSearching(false);
-                setShowVehicleResults(true);
-                setSearchedVin('');
-                setDocuments([]);
-                setSelectedDocument(null);
-                setError('');
-              }}
-              placeholder="Enter 17-character VIN"
+              onChange={handleVinChange}
+              placeholder={t('home.vinPlaceholder')}
               maxLength={17}
               autoComplete="off"
               className="h-11 w-full font-mono uppercase"
@@ -180,7 +200,7 @@ export default function Home() {
             className="h-11 gap-2"
           >
             <Search className="size-4" />
-            {searching ? 'Searching…' : 'Search'}
+            {searching ? t('home.searching') : t('home.search')}
           </Button>
         </form>
       )}
@@ -188,7 +208,7 @@ export default function Home() {
       {!searching && showVehicleResults && vin.trim().length > 0 && (
         <div className="mt-2 space-y-4">
           <h2 className="text-lg font-semibold text-slate-900">
-            Matching vehicles{' '}
+            {t('home.matchingVehicles')}{' '}
             <span className="text-sm font-normal text-slate-500">
               ({suggestions.length})
             </span>
@@ -199,35 +219,32 @@ export default function Home() {
                 aria-hidden="true"
                 className="mx-auto mb-3 size-8 text-slate-400"
               />
-              <p className="text-sm text-slate-500">
-                No vehicles match this VIN. Try another search.
-              </p>
+              <p className="text-sm text-slate-500">{t('home.noVehicles')}</p>
             </div>
           ) : (
             <>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p aria-live="polite" className="text-sm text-slate-500">
-                  Showing {firstVehicleIndex + 1}–
-                  {Math.min(
-                    firstVehicleIndex + vehiclesPerPage,
-                    suggestions.length,
-                  )}{' '}
-                  of {suggestions.length} vehicles
+                  {t('home.showingVehicles', {
+                    from: firstVehicleIndex + 1,
+                    to: Math.min(
+                      firstVehicleIndex + vehiclesPerPage,
+                      suggestions.length,
+                    ),
+                    count: suggestions.length,
+                  })}
                 </p>
                 <div className="flex flex-wrap items-center gap-3">
                   <label
                     htmlFor="vehicles-per-page"
                     className="text-sm text-slate-600"
                   >
-                    Per page
+                    {t('home.perPage')}
                   </label>
                   <select
                     id="vehicles-per-page"
                     value={vehiclesPerPage}
-                    onChange={(event) => {
-                      setVehiclesPerPage(Number(event.target.value));
-                      setCurrentVehiclePage(1);
-                    }}
+                    onChange={handleVehiclePageSizeChange}
                     className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   >
                     {[5, 10, 15, 20].map((pageSize) => (
@@ -237,7 +254,7 @@ export default function Home() {
                     ))}
                   </select>
                   <nav
-                    aria-label="Vehicle result pages"
+                    aria-label={t('home.resultPages')}
                     className="flex items-center gap-2"
                   >
                     <Button
@@ -245,30 +262,27 @@ export default function Home() {
                       variant="outline"
                       size="sm"
                       disabled={currentVehiclePage === 1}
-                      onClick={() =>
-                        setCurrentVehiclePage((page) => Math.max(1, page - 1))
-                      }
+                      onClick={handlePreviousVehiclePage}
                     >
-                      Previous
+                      {t('home.previous')}
                     </Button>
                     <span
                       aria-live="polite"
                       className="min-w-20 text-center text-sm text-slate-600"
                     >
-                      Page {currentVehiclePage} of {pageCount}
+                      {t('home.pageOf', {
+                        page: currentVehiclePage,
+                        count: pageCount,
+                      })}
                     </span>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       disabled={currentVehiclePage >= pageCount}
-                      onClick={() =>
-                        setCurrentVehiclePage((page) =>
-                          Math.min(pageCount, page + 1),
-                        )
-                      }
+                      onClick={handleNextVehiclePage}
                     >
-                      Next
+                      {t('home.next')}
                     </Button>
                   </nav>
                 </div>
@@ -283,9 +297,7 @@ export default function Home() {
                     >
                       <VehicleCard
                         vehicle={suggestion}
-                        onSelect={(selectedVehicle) =>
-                          void selectVehicle(selectedVehicle)
-                        }
+                        onSelect={handleSelectVehicle}
                       />
                     </AnimatedListItem>
                   ))}
@@ -301,24 +313,31 @@ export default function Home() {
           className="flex items-center gap-2 text-sm text-red-700"
         >
           <AlertCircle className="size-4" />
-          {error}
+          {t(error)}
         </p>
       )}
       {sourceErrors.length > 0 && sourceErrors.length < 2 && (
         <p role="status" className="text-sm text-amber-700">
-          {sourceErrors.join(', ')} System is unavailable; showing available
-          documents.
+          {t('home.partialFailure', {
+            sources: sourceErrors
+              .map((source) =>
+                t(
+                  source === 'Sales'
+                    ? 'documents.sourceSales'
+                    : 'documents.sourceService',
+                ),
+              )
+              .join(', '),
+          })}
         </p>
       )}
       {loading && searchedVin && (
         <div
           role="status"
-          aria-label="Loading vehicle documents"
+          aria-label={t('home.loadingDocuments')}
           className="mt-10 w-full"
         >
-          <span className="sr-only">
-            Loading vehicle and document information…
-          </span>
+          <span className="sr-only">{t('home.loadingDocuments')}</span>
           <div className="mb-6 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
             <VehicleInformationSkeleton />
             <div aria-hidden="true" className="flex items-center gap-4">
@@ -341,9 +360,11 @@ export default function Home() {
                 />
               </div>
               <div className="min-w-0">
-                <p className="text-sm text-slate-500">Documents for</p>
+                <p className="text-sm text-slate-500">
+                  {t('home.documentsFor')}
+                </p>
                 <h2 className="text-lg font-semibold">
-                  {selectedVehicle?.vehicle_name ?? 'Vehicle'}
+                  {selectedVehicle?.vehicle_name ?? t('home.vehicle')}
                 </h2>
                 <p className="break-all font-mono text-sm text-slate-600">
                   {searchedVin}
@@ -352,22 +373,22 @@ export default function Home() {
             </div>
             <div className="flex items-center justify-between gap-4 sm:justify-end">
               <span className="text-sm text-slate-500">
-                {documents.length} documents
+                {t('home.documentCount', { count: documents.length })}
               </span>
               <Button
                 type="button"
                 variant="outline"
                 className="gap-2"
-                onClick={goBackToVehicleResults}
+                onClick={handleBackToVehicleResults}
               >
                 <ArrowLeft />
-                Go back
+                {t('home.goBack')}
               </Button>
             </div>
           </div>
           {documents.length === 0 ? (
             <p className="rounded-xl border border-dashed py-10 text-center text-slate-500">
-              No documents found for this vehicle.
+              {t('home.noDocuments')}
             </p>
           ) : (
             <ol className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 [&>*]:min-w-0">
@@ -389,16 +410,16 @@ export default function Home() {
         <div className="rounded-xl border border-dashed bg-slate-50/60 px-6 py-14 text-center">
           <CarFront className="mx-auto size-8 text-slate-400" />
           <p className="mt-3 font-medium text-slate-700">
-            Start with a VIN search
+            {t('home.startSearch')}
           </p>
           <p className="mt-1 text-sm text-slate-500">
-            Matching vehicles will appear here.
+            {t('home.matchingVehiclesWillAppear')}
           </p>
         </div>
       )}
       <DocumentPreviewSheet
         document={selectedDocument}
-        onClose={() => setSelectedDocument(null)}
+        onClose={handleCloseDocumentPreview}
       />
     </section>
   );

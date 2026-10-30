@@ -32,6 +32,24 @@ export function AppHeader() {
   const { t, i18n: translation } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const { logout, isPending } = useLogout();
+
+  function handleLanguageChange(language: AppLanguage) {
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+    void i18n.changeLanguage(language);
+  }
+
+  function handleSelectVietnamese() {
+    handleLanguageChange('vi');
+  }
+
+  function handleSelectEnglish() {
+    handleLanguageChange('en');
+  }
+
+  function handleLogoutSelect() {
+    void logout();
+  }
+
   const breadcrumbs = matches.flatMap((match) => {
     const handle = match.handle;
     if (
@@ -91,10 +109,9 @@ export function AppHeader() {
           {(['vi', 'en'] as const).map((language: AppLanguage) => (
             <DropdownMenuItem
               key={language}
-              onSelect={() => {
-                window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
-                void i18n.changeLanguage(language);
-              }}
+              onSelect={
+                language === 'vi' ? handleSelectVietnamese : handleSelectEnglish
+              }
               aria-current={
                 translation.resolvedLanguage === language ? 'true' : undefined
               }
@@ -141,7 +158,7 @@ export function AppHeader() {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             disabled={isPending}
-            onSelect={() => void logout()}
+            onSelect={handleLogoutSelect}
             className="cursor-pointer text-destructive focus:text-destructive"
           >
             <LogOut aria-hidden="true" />
