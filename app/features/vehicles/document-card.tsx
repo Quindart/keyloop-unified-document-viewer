@@ -17,12 +17,17 @@ export function DocumentCard({ document, index, onSelect }: DocumentCardProps) {
       ? t('documents.sourceSales')
       : t('documents.sourceService');
   const typeTranslationKey = getDocumentTypeTranslationKey(document.type);
+
+  function handleClick() {
+    onSelect(document);
+  }
+
   return (
     <AnimatedListItem index={index} className="w-full min-w-0">
       <button
         type="button"
         aria-haspopup="dialog"
-        onClick={() => onSelect(document)}
+        onClick={handleClick}
         className="flex min-h-36 w-full flex-col justify-between gap-5 rounded-xl border bg-white p-4 text-left shadow-sm transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 sm:p-5"
       >
         <span className="flex items-start gap-3">

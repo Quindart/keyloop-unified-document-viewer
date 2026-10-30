@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { ArrowLeft, Search, AlertCircle, CarFront } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import i18n from '~/i18n/i18n';
@@ -75,7 +75,31 @@ export default function Home() {
   );
   const isDocumentView = Boolean(searchedVin && !error);
 
-  async function search(event: FormEvent<HTMLFormElement>) {
+  function handleVinChange(event: ChangeEvent<HTMLInputElement>) {
+    setVin(event.target.value.toUpperCase());
+    setCurrentVehiclePage(1);
+    setSearching(false);
+    setShowVehicleResults(true);
+    setSearchedVin('');
+    setDocuments([]);
+    setSelectedDocument(null);
+    setError('');
+  }
+
+  function handleVehiclePageSizeChange(event: ChangeEvent<HTMLSelectElement>) {
+    setVehiclesPerPage(Number(event.target.value));
+    setCurrentVehiclePage(1);
+  }
+
+  function handlePreviousVehiclePage() {
+    setCurrentVehiclePage((page) => Math.max(1, page - 1));
+  }
+
+  function handleNextVehiclePage() {
+    setCurrentVehiclePage((page) => Math.min(pageCount, page + 1));
+  }
+
+  async function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setCurrentVehiclePage(1);
     const normalizedVin = vin.trim().toUpperCase();
@@ -98,7 +122,7 @@ export default function Home() {
     setShowVehicleResults(true);
   }
 
-  async function selectVehicle(vehicle: Vehicle) {
+  async function handleSelectVehicle(vehicle: Vehicle) {
     const normalizedVin = vehicle.vin;
     setPreviousVehicleQuery(vin.trim());
     setVin(normalizedVin);
@@ -125,7 +149,7 @@ export default function Home() {
     if (failures.length === 2) setError('home.systemsUnavailable');
   }
 
-  function goBackToVehicleResults() {
+  function handleBackToVehicleResults() {
     setVin(previousVehicleQuery);
     setShowVehicleResults(true);
     setSearchedVin('');
@@ -133,6 +157,10 @@ export default function Home() {
     setSelectedDocument(null);
     setSourceErrors([]);
     setError('');
+  }
+
+  function handleCloseDocumentPreview() {
+    setSelectedDocument(null);
   }
 
   return (
@@ -148,7 +176,7 @@ export default function Home() {
       </header>
       {!isDocumentView && (
         <form
-          onSubmit={search}
+          onSubmit={handleSearch}
           className="flex flex-col gap-3 rounded-xl border bg-white p-4 shadow-sm sm:flex-row sm:p-5"
         >
           <label className="sr-only" htmlFor="vin">
@@ -159,16 +187,7 @@ export default function Home() {
               id="vin"
               value={vin}
               disabled={loading || searching}
-              onChange={(event) => {
-                setVin(event.target.value.toUpperCase());
-                setCurrentVehiclePage(1);
-                setSearching(false);
-                setShowVehicleResults(true);
-                setSearchedVin('');
-                setDocuments([]);
-                setSelectedDocument(null);
-                setError('');
-              }}
+              onChange={handleVinChange}
               placeholder={t('home.vinPlaceholder')}
               maxLength={17}
               autoComplete="off"
@@ -225,10 +244,7 @@ export default function Home() {
                   <select
                     id="vehicles-per-page"
                     value={vehiclesPerPage}
-                    onChange={(event) => {
-                      setVehiclesPerPage(Number(event.target.value));
-                      setCurrentVehiclePage(1);
-                    }}
+                    onChange={handleVehiclePageSizeChange}
                     className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   >
                     {[5, 10, 15, 20].map((pageSize) => (
@@ -246,9 +262,7 @@ export default function Home() {
                       variant="outline"
                       size="sm"
                       disabled={currentVehiclePage === 1}
-                      onClick={() =>
-                        setCurrentVehiclePage((page) => Math.max(1, page - 1))
-                      }
+                      onClick={handlePreviousVehiclePage}
                     >
                       {t('home.previous')}
                     </Button>
@@ -266,11 +280,7 @@ export default function Home() {
                       variant="outline"
                       size="sm"
                       disabled={currentVehiclePage >= pageCount}
-                      onClick={() =>
-                        setCurrentVehiclePage((page) =>
-                          Math.min(pageCount, page + 1),
-                        )
-                      }
+                      onClick={handleNextVehiclePage}
                     >
                       {t('home.next')}
                     </Button>
@@ -287,9 +297,7 @@ export default function Home() {
                     >
                       <VehicleCard
                         vehicle={suggestion}
-                        onSelect={(selectedVehicle) =>
-                          void selectVehicle(selectedVehicle)
-                        }
+                        onSelect={handleSelectVehicle}
                       />
                     </AnimatedListItem>
                   ))}
@@ -371,7 +379,7 @@ export default function Home() {
                 type="button"
                 variant="outline"
                 className="gap-2"
-                onClick={goBackToVehicleResults}
+                onClick={handleBackToVehicleResults}
               >
                 <ArrowLeft />
                 {t('home.goBack')}
@@ -411,7 +419,7 @@ export default function Home() {
       )}
       <DocumentPreviewSheet
         document={selectedDocument}
-        onClose={() => setSelectedDocument(null)}
+        onClose={handleCloseDocumentPreview}
       />
     </section>
   );

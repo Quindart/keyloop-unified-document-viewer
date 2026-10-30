@@ -340,13 +340,12 @@ export function DocumentPreviewSheet({
     ? getDocumentTypeTranslationKey(document.type)
     : undefined;
 
+  function handleOpenChange(open: boolean) {
+    if (!open) onClose();
+  }
+
   return (
-    <Sheet
-      open={document !== null}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
+    <Sheet open={document !== null} onOpenChange={handleOpenChange}>
       <SheetContent
         side="right"
         className="flex h-full w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl"

@@ -1,5 +1,5 @@
 // Adapted from official shadcn login-04: https://ui.shadcn.com/blocks/login
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Navigate, useSearchParams } from 'react-router';
 import { Eye, EyeOff, LoaderCircle } from 'lucide-react';
@@ -23,6 +23,15 @@ export function LoginForm({ title }: { title: string }) {
   const busy = phase !== 'idle';
   const googleError = searchParams.get('auth_error') === 'google';
   const { errors } = form.formState;
+
+  function handleTogglePasswordVisibility() {
+    setShowPassword((value) => !value);
+  }
+
+  function handleGoogleSignInClick(event: MouseEvent<HTMLAnchorElement>) {
+    if (busy) event.preventDefault();
+  }
+
   useEffect(() => {
     document.title = title;
   }, [title]);
@@ -141,7 +150,7 @@ export function LoginForm({ title }: { title: string }) {
                   }
                   aria-pressed={showPassword}
                   disabled={busy}
-                  onClick={() => setShowPassword((value) => !value)}
+                  onClick={handleTogglePasswordVisibility}
                 >
                   {showPassword ? (
                     <EyeOff aria-hidden="true" />
@@ -205,9 +214,7 @@ export function LoginForm({ title }: { title: string }) {
                 to="/auth/google"
                 aria-label={t('login.continueGoogle')}
                 tabIndex={busy ? -1 : undefined}
-                onClick={(event) => {
-                  if (busy) event.preventDefault();
-                }}
+                onClick={handleGoogleSignInClick}
               >
                 <svg
                   aria-hidden="true"

@@ -198,6 +198,12 @@ const Sidebar = React.forwardRef<
     const { isMobile, state, openMobile, setOpenMobile, triggerRef } =
       useSidebar();
 
+    function handleMobileCloseAutoFocus(event: Event) {
+      // The sidebar toggle sits outside Sheet, so restore its focus explicitly.
+      event.preventDefault();
+      triggerRef.current?.focus();
+    }
+
     if (collapsible === 'none') {
       return (
         <div
@@ -217,11 +223,7 @@ const Sidebar = React.forwardRef<
       return (
         <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
           <SheetContent
-            onCloseAutoFocus={(event) => {
-              // The sidebar toggle sits outside Sheet, so restore its focus explicitly.
-              event.preventDefault();
-              triggerRef.current?.focus();
-            }}
+            onCloseAutoFocus={handleMobileCloseAutoFocus}
             data-sidebar="sidebar"
             data-mobile="true"
             className="w-[var(--sidebar-width)] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
@@ -298,6 +300,11 @@ const SidebarTrigger = React.forwardRef<
   const { t } = useTranslation();
   const { toggleSidebar, triggerRef } = useSidebar();
 
+  function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
+    onClick?.(event);
+    toggleSidebar();
+  }
+
   return (
     <Button
       ref={(node) => {
@@ -309,10 +316,7 @@ const SidebarTrigger = React.forwardRef<
       variant="ghost"
       size="icon"
       className={cn('h-7 w-7', className)}
-      onClick={(event) => {
-        onClick?.(event);
-        toggleSidebar();
-      }}
+      onClick={handleClick}
       {...props}
     >
       <PanelLeft />
