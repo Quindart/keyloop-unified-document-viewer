@@ -9,6 +9,7 @@ import {
   DocumentCard,
   type VehicleDocument,
 } from '~/features/vehicles/document-card';
+import { DocumentPreviewSheet } from '~/features/vehicles/document-preview-sheet';
 
 const vinStartingCharacters = '0123456789ABCDEFGHJKLMNPRSTUVWXYZ';
 const mockVinsPerStartingCharacter = 7;
@@ -104,6 +105,8 @@ export default function Home() {
   const [previousVehicleQuery, setPreviousVehicleQuery] = useState('');
   const [searchedVin, setSearchedVin] = useState('');
   const [documents, setDocuments] = useState<VehicleDocument[]>([]);
+  const [selectedDocument, setSelectedDocument] =
+    useState<VehicleDocument | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [sourceErrors, setSourceErrors] = useState<string[]>([]);
@@ -138,6 +141,7 @@ export default function Home() {
     setError('');
     setSourceErrors([]);
     setDocuments([]);
+    setSelectedDocument(null);
     setSearchedVin('');
     setShowVehicleResults(true);
   }
@@ -148,6 +152,7 @@ export default function Home() {
     setShowVehicleResults(false);
     setError('');
     setSourceErrors([]);
+    setSelectedDocument(null);
     setLoading(true);
     setSearchedVin(normalizedVin);
     const results = await Promise.allSettled([
@@ -173,6 +178,7 @@ export default function Home() {
     setShowVehicleResults(true);
     setSearchedVin('');
     setDocuments([]);
+    setSelectedDocument(null);
     setSourceErrors([]);
     setError('');
   }
@@ -209,6 +215,7 @@ export default function Home() {
                 setShowVehicleResults(true);
                 setSearchedVin('');
                 setDocuments([]);
+                setSelectedDocument(null);
                 setError('');
               }}
               placeholder="Enter 17-character VIN"
@@ -382,7 +389,11 @@ export default function Home() {
           ) : (
             <ol className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 [&>*]:min-w-0">
               {documents.map((document) => (
-                <DocumentCard key={document.id} document={document} />
+                <DocumentCard
+                  key={document.id}
+                  document={document}
+                  onSelect={setSelectedDocument}
+                />
               ))}
             </ol>
           )}
@@ -399,6 +410,10 @@ export default function Home() {
           </p>
         </div>
       )}
+      <DocumentPreviewSheet
+        document={selectedDocument}
+        onClose={() => setSelectedDocument(null)}
+      />
     </section>
   );
 }
