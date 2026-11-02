@@ -1,10 +1,9 @@
-import vehicleData from '~/mock/data.json';
+import vehicleData from '~/mock/vehicles.json';
 
 export type Vehicle = {
   vin: string;
   vehicle_name: string;
   image: string;
-  documents: VehicleDocument[];
 };
 
 export type VehicleDocument = {
@@ -13,9 +12,11 @@ export type VehicleDocument = {
   date: string;
   file_url: string;
   type: string;
-  source: 'Sales' | 'Service';
+  source: VehicleDocumentSource;
   format: 'PDF' | 'DOCX' | 'XLS';
 };
+
+export type VehicleDocumentSource = 'Sales' | 'Service';
 
 type VehicleMockData = {
   vehicles: Vehicle[];

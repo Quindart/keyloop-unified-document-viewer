@@ -19,6 +19,19 @@ if (!i18n.isInitialized) {
     interpolation: { escapeValue: false },
     returnNull: false,
   });
+} else {
+  for (const language of Object.keys(resources) as AppLanguage[]) {
+    i18n.addResourceBundle(
+      language,
+      'translation',
+      resources[language].translation,
+      true,
+      true,
+    );
+  }
+
+  const currentLanguage = i18n.resolvedLanguage ?? i18n.language;
+  if (currentLanguage) void i18n.changeLanguage(currentLanguage);
 }
 
 export default i18n;

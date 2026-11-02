@@ -1,39 +1,4 @@
 import { Skeleton } from '~/components/ui/skeleton';
-import { useTranslation } from 'react-i18next';
-
-export function VehicleGridSkeleton() {
-  const { t } = useTranslation();
-  return (
-    <div
-      role="status"
-      aria-label={t('home.loadingVehicles')}
-      className="space-y-4"
-    >
-      <p className="text-sm font-medium text-slate-600">
-        {t('home.searching')}
-      </p>
-      <span className="sr-only">{t('home.loadingVehicles')}</span>
-      <ul
-        aria-hidden="true"
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
-      >
-        {Array.from({ length: 8 }, (_, index) => (
-          <li
-            key={index}
-            className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
-          >
-            <Skeleton className="h-36 w-full rounded-none" />
-            <div className="space-y-4 p-5 sm:p-6">
-              <Skeleton className="h-5 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="mt-8 h-4 w-full" />
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
 
 export function VehicleInformationSkeleton() {
   return (

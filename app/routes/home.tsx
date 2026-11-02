@@ -2,13 +2,16 @@ import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { ArrowLeft, Search, AlertCircle, CarFront } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import i18n from '~/i18n/i18n';
+import {
+  getSalesDocumentsByVin,
+  getServiceDocumentsByVin,
+} from '~/features/vehicles/vehicle-api';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Skeleton } from '~/components/ui/skeleton';
 import { AnimatePresence } from 'motion/react';
 import {
   DocumentGridSkeleton,
-  VehicleGridSkeleton,
   VehicleInformationSkeleton,
 } from '~/components/atoms/vehicle-skeletons';
 import { AnimatedListItem } from '~/components/atoms/animated-list-item';
@@ -19,18 +22,10 @@ import {
   vehicleMockData,
   type Vehicle,
   type VehicleDocument,
+  type VehicleDocumentSource,
 } from '~/features/vehicles/vehicle-types';
 
 const mockVehicles = vehicleMockData.vehicles;
-
-async function fetchSalesDocuments(vehicle: Vehicle) {
-  await new Promise((resolve) => setTimeout(resolve, 350));
-  return vehicle.documents.filter((document) => document.source === 'Sales');
-}
-async function fetchServiceDocuments(vehicle: Vehicle) {
-  await new Promise((resolve) => setTimeout(resolve, 650));
-  return vehicle.documents.filter((document) => document.source === 'Service');
-}
 
 export function meta() {
   return [{ title: i18n.t('home.title') }];
@@ -49,9 +44,8 @@ export default function Home() {
   const [selectedDocument, setSelectedDocument] =
     useState<VehicleDocument | null>(null);
   const [loading, setLoading] = useState(false);
-  const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
-  const [sourceErrors, setSourceErrors] = useState<string[]>([]);
+  const [sourceErrors, setSourceErrors] = useState<VehicleDocumentSource[]>([]);
   const [showVehicleResults, setShowVehicleResults] = useState(false);
   const [currentVehiclePage, setCurrentVehiclePage] = useState(1);
   const [vehiclesPerPage, setVehiclesPerPage] = useState(5);
@@ -78,11 +72,11 @@ export default function Home() {
   function handleVinChange(event: ChangeEvent<HTMLInputElement>) {
     setVin(event.target.value.toUpperCase());
     setCurrentVehiclePage(1);
-    setSearching(false);
     setShowVehicleResults(true);
     setSearchedVin('');
     setDocuments([]);
     setSelectedDocument(null);
+    setSourceErrors([]);
     setError('');
   }
 
@@ -101,25 +95,30 @@ export default function Home() {
 
   async function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setCurrentVehiclePage(1);
     const normalizedVin = vin.trim().toUpperCase();
     if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(normalizedVin)) {
-      setSearching(false);
+      setLoading(false);
       setError('home.invalidVin');
       setDocuments([]);
       setSearchedVin('');
+      setSourceErrors([]);
+      setShowVehicleResults(true);
       return;
     }
-    setError('');
-    setSourceErrors([]);
-    setDocuments([]);
-    setSelectedDocument(null);
-    setSearchedVin('');
-    setShowVehicleResults(false);
-    setSearching(true);
-    await new Promise((resolve) => setTimeout(resolve, 350));
-    setSearching(false);
-    setShowVehicleResults(true);
+    const vehicle = mockVehicles.find(
+      (candidate) => candidate.vin === normalizedVin,
+    );
+    if (!vehicle) {
+      setLoading(false);
+      setError('home.noVehicles');
+      setDocuments([]);
+      setSearchedVin('');
+      setSourceErrors([]);
+      setShowVehicleResults(true);
+      return;
+    }
+
+    await handleSelectVehicle(vehicle);
   }
 
   async function handleSelectVehicle(vehicle: Vehicle) {
@@ -129,15 +128,16 @@ export default function Home() {
     setShowVehicleResults(false);
     setError('');
     setSourceErrors([]);
+    setDocuments([]);
     setSelectedDocument(null);
     setLoading(true);
     setSearchedVin(normalizedVin);
     const results = await Promise.allSettled([
-      fetchSalesDocuments(vehicle),
-      fetchServiceDocuments(vehicle),
+      getSalesDocumentsByVin(normalizedVin),
+      getServiceDocumentsByVin(normalizedVin),
     ]);
     const next: VehicleDocument[] = [];
-    const failures: string[] = [];
+    const failures: VehicleDocumentSource[] = [];
     results.forEach((result, index) => {
       if (result.status === 'fulfilled') next.push(...result.value);
       else failures.push(index === 0 ? 'Sales' : 'Service');
@@ -186,7 +186,7 @@ export default function Home() {
             <Input
               id="vin"
               value={vin}
-              disabled={loading || searching}
+              disabled={loading}
               onChange={handleVinChange}
               placeholder={t('home.vinPlaceholder')}
               maxLength={17}
@@ -194,18 +194,13 @@ export default function Home() {
               className="h-11 w-full font-mono uppercase"
             />
           </div>
-          <Button
-            type="submit"
-            disabled={loading || searching}
-            className="h-11 gap-2"
-          >
+          <Button type="submit" disabled={loading} className="h-11 gap-2">
             <Search className="size-4" />
-            {searching ? t('home.searching') : t('home.search')}
+            {t('home.search')}
           </Button>
         </form>
       )}
-      {searching && <VehicleGridSkeleton />}
-      {!searching && showVehicleResults && vin.trim().length > 0 && (
+      {showVehicleResults && vin.trim().length > 0 && (
         <div className="mt-2 space-y-4">
           <h2 className="text-lg font-semibold text-slate-900">
             {t('home.matchingVehicles')}{' '}
@@ -392,28 +387,26 @@ export default function Home() {
             </p>
           ) : (
             <ol className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 [&>*]:min-w-0">
-              <AnimatePresence>
-                {documents.map((document, index) => (
-                  <DocumentCard
-                    key={document.id}
-                    document={document}
-                    index={index}
-                    onSelect={setSelectedDocument}
-                  />
-                ))}
-              </AnimatePresence>
+              {documents.map((document, index) => (
+                <DocumentCard
+                  key={document.id}
+                  document={document}
+                  index={index}
+                  onSelect={setSelectedDocument}
+                />
+              ))}
             </ol>
           )}
         </div>
       )}
-      {!searchedVin && !error && !showVehicleResults && !searching && (
+      {!searchedVin && !error && !showVehicleResults && !loading && (
         <div className="rounded-xl border border-dashed bg-slate-50/60 px-6 py-14 text-center">
           <CarFront className="mx-auto size-8 text-slate-400" />
           <p className="mt-3 font-medium text-slate-700">
             {t('home.startSearch')}
           </p>
           <p className="mt-1 text-sm text-slate-500">
-            {t('home.matchingVehiclesWillAppear')}
+            {t('home.documentsWillAppear')}
           </p>
         </div>
       )}

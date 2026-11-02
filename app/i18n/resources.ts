@@ -44,7 +44,6 @@ export const resources = {
         vinLabel: 'Số nhận dạng xe (VIN)',
         vinPlaceholder: 'Nhập VIN gồm 17 ký tự',
         search: 'Tìm kiếm',
-        searching: 'Đang tìm kiếm…',
         matchingVehicles: 'Xe phù hợp',
         noVehicles: 'Không tìm thấy xe có VIN này. Hãy thử tìm kiếm khác.',
         showingVehicles:
@@ -66,9 +65,8 @@ export const resources = {
         goBack: 'Quay lại',
         noDocuments: 'Không tìm thấy tài liệu cho xe này.',
         startSearch: 'Bắt đầu bằng cách tìm VIN',
-        matchingVehiclesWillAppear: 'Các xe phù hợp sẽ xuất hiện tại đây.',
+        documentsWillAppear: 'Tài liệu của xe sẽ xuất hiện tại đây.',
         resultPages: 'Các trang kết quả xe',
-        loadingVehicles: 'Đang tải xe',
       },
       errors: {
         pageUnavailable: 'Không thể mở trang',
@@ -195,7 +193,6 @@ export const resources = {
         vinLabel: 'Vehicle Identification Number (VIN)',
         vinPlaceholder: 'Enter a 17-character VIN',
         search: 'Search',
-        searching: 'Searching…',
         matchingVehicles: 'Matching vehicles',
         noVehicles: 'No vehicles match this VIN. Try another search.',
         showingVehicles: 'Showing {{from}}–{{to}} of {{count}} vehicles',
@@ -215,9 +212,8 @@ export const resources = {
         goBack: 'Go back',
         noDocuments: 'No documents found for this vehicle.',
         startSearch: 'Start with a VIN search',
-        matchingVehiclesWillAppear: 'Matching vehicles will appear here.',
+        documentsWillAppear: 'Vehicle documents will appear here.',
         resultPages: 'Vehicle result pages',
-        loadingVehicles: 'Loading vehicles',
       },
       errors: {
         pageUnavailable: 'Could not open the page',

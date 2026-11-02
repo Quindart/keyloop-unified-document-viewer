@@ -1,5 +1,5 @@
-import type { Vehicle } from './vehicle-types';
 import { useTranslation } from 'react-i18next';
+import type { Vehicle } from './vehicle-types';
 
 type VehicleCardProps = {
   vehicle: Vehicle;

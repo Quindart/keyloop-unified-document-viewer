@@ -5,40 +5,111 @@ Technical assessment project for **Scenario D: The Unified Document Viewer**.
 <img width="1469" height="824" alt="Ảnh màn hình 2026-10-30 lúc 19 10 18" src="https://github.com/user-attachments/assets/cb1d805a-d2ed-43ab-8da4-94a0798d1d4d" />
 <img width="1473" height="598" alt="Ảnh màn hình 2026-10-30 lúc 19 10 46" src="https://github.com/user-attachments/assets/c40c729d-2efa-475f-a53f-844288823aa8" />
 
-
 ## Overview
 
-The assessment scenario is a frontend application that gives users one consolidated view of vehicle-related documents. A user enters a valid Vehicle Identification Number (VIN), and the application aggregates document metadata from two mocked external systems: the Sales System API and the Service System API. The intended experience brings sales and service history together in a single, searchable-by-vehicle view.
+The application gives users one consolidated view of vehicle-related documents. A user searches by Vehicle Identification Number (VIN), and the Home page combines records from separate Sales System and Service System mock data sources.
 
 ## Key Features
 
-### Assessment goals
+### Current behavior
 
 - **Single VIN search:** Validate a VIN and use it as the lookup key for vehicle documents.
 - **Parallel aggregation:** Request Sales System and Service System data concurrently to reduce total wait time.
-- **Partial failure resilience:** Keep available results visible if one source is delayed or unavailable, and communicate which source could not be reached.
+- **Partial failure handling:** Keep successful results if one adapter rejects, and identify the failed source. The current mock adapters do not intentionally inject failures.
 - **Unified document list:** Present normalized sales and service records in one chronological view, with a clear source badge on each document.
 - **Responsive interaction states:** Provide loading skeletons, useful empty states, inline errors, and retry actions across screen sizes.
 
 ## Architecture and System Design
 
-### Target document aggregation design
+### Document data structure
 
-1. The browser submits a VIN to an application route.
-2. The server-side route validates and normalizes the VIN, then requests the Sales System and Service System mock endpoints concurrently.
-3. Each source response is mapped into a shared document model. Source-specific fields remain behind the service boundary.
-4. The route returns the normalized records and per-source availability to the UI. A failure or timeout from one source should not discard successful results from the other.
-5. The UI sorts the combined documents by their event date and labels each record with its originating system.
+Mock records are split into three JSON files. Vehicle details live once in `vehicles.json`; each document source has its own file, and each document record refers to a vehicle through `vin`.
 
-Keeping external-system calls behind a server route avoids coupling browser components to multiple API contracts and provides a natural place for input validation, timeout handling, response normalization, and safe error reporting.
+`app/mock/vehicles.json`:
+
+```json
+{
+  "vehicles": [
+    {
+      "vin": "1HGCM82633A004352",
+      "vehicle_name": "Honda Accord",
+      "image": "/images/cars/car-5.png"
+    }
+  ]
+}
+```
+
+`app/mock/sales-documents.json`:
+
+```json
+{
+  "documents": [
+    {
+      "vin": "1HGCM82633A004352",
+      "id": "s1",
+      "type": "Contract",
+      "date": "2025-03-12T10:30:00Z",
+      "format": "PDF",
+      "name": "Purchase Agreement",
+      "file_url": "/files/purchase-pdf.pdf"
+    }
+  ]
+}
+```
+
+`app/mock/service-documents.json` has the same record shape, but contains service records. For example:
+
+```json
+{
+  "documents": [
+    {
+      "vin": "1HGCM82633A004352",
+      "id": "v1",
+      "type": "Inspection",
+      "date": "2025-03-13T11:00:00Z",
+      "format": "PDF",
+      "name": "Pre-Delivery Inspection",
+      "file_url": "/files/purchase-pdf.pdf"
+    }
+  ]
+}
+```
+
+The source is implicit in the file, so raw JSON documents do not include a `source` field. The mock service adds `source: "Sales"` or `source: "Service"` when it maps a record into the shared `VehicleDocument` model. The lookup `vin` is removed from the mapped document because the UI already has the selected vehicle VIN.
+
+The normalized model passed to the document cards and preview is:
+
+```ts
+type VehicleDocument = {
+  id: string;
+  name: string;
+  date: string;
+  file_url: string;
+  type: string;
+  source: 'Sales' | 'Service';
+  format: 'PDF' | 'DOCX' | 'XLS';
+};
+```
+
+Document `id` values can repeat for different VINs. A document is therefore identified within a source by the composite key `(vin, id)`; the source file distinguishes Sales IDs from Service IDs.
+
+### Aggregation flow
+
+1. The Home page filters the vehicle catalog by the VIN text and displays matching vehicles.
+2. Submitting a valid 17-character VIN starts aggregation for the exact match. Selecting a vehicle card starts the same flow for that vehicle's VIN.
+3. `getSalesDocumentsByVin(vin)` and `getServiceDocumentsByVin(vin)` read their own JSON datasets, simulate independent network delays, and filter records by VIN. They are called concurrently with `Promise.allSettled`.
+4. The Home page combines successful responses and sorts documents by `date`, newest first. A rejected source is reported while successful records remain visible; if both requests reject, the page shows an error.
+
+These are client-side mock API functions, not HTTP endpoints. Their delays currently differ (350 ms for Sales and 650 ms for Service); the functions do not deliberately simulate failures yet. The UI's partial-failure path is ready for rejected requests when failure simulation or real API calls are added.
 
 ### Vehicle-document ERD
 
-The mock data stores a list of documents inside each vehicle. In a relational model, each document row references its vehicle through `vehicle_vin`:
+The JSON structure represents one vehicle catalog and two document collections. `vin` acts as the foreign key from each source's document records to the vehicle catalog:
 
 ```mermaid
 erDiagram
-    VEHICLE ||--|{ DOCUMENT : has
+    VEHICLE ||--o{ SALES_DOCUMENT : has
+    VEHICLE ||--o{ SERVICE_DOCUMENT : has
 
     VEHICLE {
         string vin PK
@@ -46,52 +117,142 @@ erDiagram
         string image
     }
 
-    DOCUMENT {
-        string vehicle_vin PK, FK
+    SALES_DOCUMENT {
+        string vin PK, FK
         string id PK
         string name
         date date
         string file_url
         string type
-        string source
+        string format
+    }
+
+    SERVICE_DOCUMENT {
+        string vin PK, FK
+        string id PK
+        string name
+        date date
+        string file_url
+        string type
         string format
     }
 ```
 
-`DOCUMENT` uses the composite primary key (`vehicle_vin`, `id`), because the mock document IDs repeat across vehicles. Every document belongs to exactly one vehicle, and each vehicle has one or more documents.
+Each source uses `(vin, id)` as its composite key. A vehicle can have zero or more documents in either source, including no records in one source while the other source still returns results.
 
 ### Current application architecture
 
-The project uses React Router Framework Mode with server-side rendering. Route modules live in `app/routes`; and shared layout and UI components live under `app/components`. Zustand persists the client-side demo session, while Google OAuth state and identity are handled by server-side session utilities.
+The project uses React Router Framework Mode with server-side rendering. Route modules live in `app/routes`, and shared layout and UI components live under `app/components`. Document mock data is imported by `app/features/vehicles/vehicle-api.ts`; only the authentication and Google OAuth flows use server routes. Zustand persists the client-side demo session, while Google OAuth state and identity are handled by server-side session utilities.
 
 ## Project Structure
 
-The tree below reflects the current repository rather than the proposed VIN feature layout:
+The tree below lists the current application modules, mock data, public assets, and root configuration files. Generated dependencies and build output are omitted.
 
 ```text
 .
+├── .agents/
+│   └── skills/react-router/
+│       ├── SKILL.md
+│       └── references/
+│           ├── data-mode.md
+│           ├── declarative-mode.md
+│           ├── framework-mode.md
+│           └── rsc.md
 ├── app/
 │   ├── components/
-│   │   ├── layout/             # Workspace header and sidebar
-│   │   └── ui/                 # Reusable UI primitives
+│   │   ├── atoms/
+│   │   │   ├── animated-list-item.tsx
+│   │   │   ├── language-select.tsx
+│   │   │   └── vehicle-skeletons.tsx
+│   │   ├── layout/
+│   │   │   ├── app-header.tsx
+│   │   │   └── app-sidebar.tsx
+│   │   └── ui/
+│   │       ├── avatar.tsx
+│   │       ├── breadcrumb.tsx
+│   │       ├── button.tsx
+│   │       ├── card.tsx
+│   │       ├── dropdown-menu.tsx
+│   │       ├── input.tsx
+│   │       ├── label.tsx
+│   │       ├── select.tsx
+│   │       ├── separator.tsx
+│   │       ├── sheet.tsx
+│   │       ├── sidebar.tsx
+│   │       ├── skeleton.tsx
+│   │       └── tooltip.tsx
 │   ├── features/
-│   │   └── auth/                # Demo authentication and Google OAuth
-│   │   └── vehicles/            # Demo vehicles
-│   ├── hooks/                   # Shared React hooks
-│   ├── lib/                     # Small shared utilities
-│   ├── routes/                  # Login, workspace, and auth route modules
-│   ├── root.tsx                 # Application document and providers
-│   ├── routes.ts                # Route configuration
-│   └── app.css                  # Global styles and Tailwind entry point
-├── public/                      # Static assets
-├── docs/                        # Project documentation
-├── package.json                 # Scripts and dependencies
-├── react-router.config.ts       # React Router SSR configuration
-├── vite.config.ts               # Vite configuration
-└── vitest.config.ts             # Vitest configuration
+│   │   ├── auth/
+│   │   │   ├── auth-gate.tsx
+│   │   │   ├── auth-messages.ts
+│   │   │   ├── auth-service.ts
+│   │   │   ├── auth-storage.ts
+│   │   │   ├── auth-store.ts
+│   │   │   ├── auth-types.ts
+│   │   │   ├── google-env.server.ts
+│   │   │   ├── google-oauth.server.ts
+│   │   │   ├── google-session.server.ts
+│   │   │   ├── login-form.tsx
+│   │   │   ├── login-progress.tsx
+│   │   │   ├── login-schema.ts
+│   │   │   ├── session-bootstrap.tsx
+│   │   │   ├── use-login.ts
+│   │   │   └── use-logout.ts
+│   │   └── vehicles/
+│   │       ├── document-card.tsx
+│   │       ├── document-labels.ts
+│   │       ├── document-preview-sheet.tsx
+│   │       ├── vehicle-api.ts
+│   │       ├── vehicle-card.tsx
+│   │       └── vehicle-types.ts
+│   ├── hooks/
+│   │   └── use-mobile.tsx
+│   ├── i18n/
+│   │   ├── i18n.ts
+│   │   └── resources.ts         # Vietnamese and English translations
+│   ├── lib/
+│   │   └── utils.ts
+│   ├── mock/
+│   │   ├── sales-documents.json
+│   │   ├── service-documents.json
+│   │   └── vehicles.json
+│   ├── providers/
+│   │   └── app-providers.tsx
+│   ├── routes/
+│   │   ├── auth.google.callback.tsx
+│   │   ├── auth.google.tsx
+│   │   ├── auth.session.tsx
+│   │   ├── home.tsx
+│   │   ├── index.tsx
+│   │   ├── login.tsx
+│   │   └── workspace.tsx
+│   ├── app.css
+│   ├── root.tsx
+│   └── routes.ts
+├── public/
+│   ├── files/                  # PDF, DOCX, and XLSX preview samples
+│   ├── icons/                  # Vietnamese and English flag icons
+│   ├── images/
+│   │   ├── cars/               # Vehicle card images
+│   │   └── document-types/     # PDF, DOCX, and XLS icons
+│   ├── keyloop-bg.jpg
+│   └── keyloop-logo.svg
+├── .dockerignore
+├── .env.example
+├── .gitignore
+├── .prettierrc
+├── Dockerfile
+├── components.json            # shadcn/ui configuration
+├── package.json
+├── playwright.config.ts
+├── pnpm-lock.yaml
+├── react-router.config.ts
+├── tsconfig.json
+├── vite.config.ts
+└── vitest.config.ts
 ```
 
-For the planned document viewer, a natural extension would add route modules for VIN search and document results, dedicated document components, a server-side aggregation service, shared document/source types, and tests. Those directories are not present yet.
+The main document-viewer implementation is in `app/routes/home.tsx` and `app/features/vehicles/`. `app/features/vehicles/vehicle-types.ts` imports the vehicle catalog, and `app/features/vehicles/vehicle-api.ts` reads the Sales and Service document files. Document previews use sample files from `public/files/`.
 
 ## Getting Started
 
@@ -110,17 +271,17 @@ pnpm install
 pnpm dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser. The current app opens its login experience; the VIN document lookup described in the assessment scenario is not implemented yet.
+Open [http://localhost:5173](http://localhost:5173) in your browser, sign in, and open **Home** to search the mock vehicle catalog by VIN. Submitting a valid exact VIN aggregates Sales and Service document metadata; partial VIN text displays matching vehicle cards.
 
 ### Demo login
 
-| Username | Password |
-| --- | --- |
-| `admin` | `admin123456Aa@` |
+| Username | Password         |
+| -------- | ---------------- |
+| `admin`  | `admin123456Aa@` |
 
 ### Optional Google OAuth setup
 
-Google login requires a Google OAuth Web application client. Copy `.env.example` to `.env`, provide the client ID and secret, set `AUTH_SESSION_SECRET`, and register `http://localhost:5173/auth/google/callback` as an authorized redirect URI in Google Cloud Console. Keep `.env` out of source control. Google login is a prototype and is independent of the planned mocked document APIs.
+Google login requires a Google OAuth Web application client. Copy `.env.example` to `.env`, provide the client ID and secret, set `AUTH_SESSION_SECRET`, and register `http://localhost:5173/auth/google/callback` as an authorized redirect URI in Google Cloud Console. Keep `.env` out of source control. Google login is a prototype and is independent of the mocked document data.
 
 ## Testing and Quality Checks
 
@@ -161,7 +322,7 @@ Generative AI was used as an engineering collaborator to accelerate exploration,
 
 - Validate authentication inputs and keep session data allowlisted rather than trusting arbitrary persisted values.
 - Preserve the existing Google OAuth flow when changing demo username/password behavior.
-- For the planned document aggregation feature, apply VIN validation, bounded request timeouts, per-source error reporting, normalized response types, deterministic sorting, and tests for success, empty, delayed, and partial-failure cases before describing it as production-ready.
+- Before replacing the mock document sources with production APIs, add server-side request handling, bounded timeouts, explicit per-source failure simulation/tests, and response validation. The current client-side adapters demonstrate aggregation behavior but are not production API integrations.
 - Prefer observable evidence from typechecks, tests, and build output over claims based only on generated suggestions.
 
 AI assistance supports the engineering process; it does not replace code review, security review, or verification against the assessment requirements.
